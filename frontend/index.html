@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>OASIS - Energy Estimation</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <div class="logo-icon">O</div>
+
+            <div>
+                <h1>OASIS</h1>
+                <p>Energy Intelligence</p>
+            </div>
+        </div>
+
+        <nav>
+            <a href="#analysis" class="active">
+                <span>⌂</span>
+                Analysis
+            </a>
+
+            <a href="#energy">
+                <span>⚡</span>
+                Energy
+            </a>
+
+            <a href="#resources">
+                <span>◉</span>
+                Resources
+            </a>
+
+            <a href="#environment">
+                <span>▣</span>
+                Environment
+            </a>
+
+            <a href="#metadata">
+                <span>ⓘ</span>
+                Run Details
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="status-dot"></div>
+
+            <div>
+                <strong>OASIS Engine</strong>
+                <p>Ready</p>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main">
+
+        <!-- HEADER -->
+
+        <header class="header">
+
+            <div>
+                <p class="overline">GREEN SOFTWARE ENGINEERING</p>
+
+                <h2>
+                    Energy Estimation
+                </h2>
+
+                <p class="subtitle">
+                    Measure the energy and environmental impact of your software.
+                </p>
+            </div>
+
+            <div class="header-badge">
+                <span></span>
+                CodeCarbon
+            </div>
+
+        </header>
+
+
+        <!-- ================= PROJECT INPUT ================= -->
+
+        <section class="card analysis-card" id="analysis">
+
+            <div class="section-title">
+
+                <div>
+                    <p class="overline">NEW ANALYSIS</p>
+
+                    <h3>
+                        Analyze a project
+                    </h3>
+                </div>
+
+                <span class="step">
+                    STEP 01
+                </span>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <!-- PROJECT PATH -->
+
+                <div class="form-group full">
+
+                    <label for="projectPath">
+                        Project Path
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <span class="input-icon">
+                            📁
+                        </span>
+
+                        <input
+                            id="projectPath"
+                            type="text"
+                            placeholder="D:\10Pearls\Pearls-AQI-Predictor"
+                        >
+
+                    </div>
+
+                    <small>
+                        Enter the absolute path of the project you want OASIS to analyze.
+                    </small>
+
+                </div>
+
+
+                <!-- EXECUTION COMMAND -->
+
+                <div class="form-group">
+
+                    <label for="executionCommand">
+                        Execution Command
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <span class="input-icon">
+                            ▶
+                        </span>
+
+                        <input
+                            id="executionCommand"
+                            type="text"
+                            placeholder="python src/run_pipeline.py"
+                        >
+
+                    </div>
+
+                    <small>
+                        Command used to execute the project.
+                    </small>
+
+                </div>
+
+
+                <!-- TIMEOUT -->
+
+                <div class="form-group">
+
+                    <label for="timeout">
+                        Execution Timeout
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <span class="input-icon">
+                            ◷
+                        </span>
+
+                        <input
+                            id="timeout"
+                            type="number"
+                            value="300"
+                            min="10"
+                        >
+
+                        <span class="input-suffix">
+                            seconds
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="analysis-actions">
+
+                <button
+                    id="runAnalysis"
+                    class="primary-button"
+                >
+                    <span>⚡</span>
+                    Run Energy Analysis
+                </button>
+
+                <span id="analysisStatus" class="analysis-status">
+                    Ready to analyze
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= SUMMARY ================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <p class="overline">EXECUTION SUMMARY</p>
+
+                    <h3>
+                        Energy overview
+                    </h3>
+                </div>
+
+                <span id="executionBadge" class="badge success">
+                    Measurement Available
+                </span>
+
+            </div>
+
+
+            <div class="metrics-grid">
+
+                <!-- ENERGY -->
+
+                <div class="metric-card primary">
+
+                    <div class="metric-top">
+
+                        <span class="metric-label">
+                            TOTAL ENERGY
+                        </span>
+
+                        <span class="metric-icon">
+                            ⚡
+                        </span>
+
+                    </div>
+
+                    <div class="metric-value">
+                        <span id="energyValue">
+                            0.000206706
+                        </span>
+
+                        <small>
+                            kWh
+                        </small>
+                    </div>
+
+                    <p id="energyWh">
+                        0.206706 Wh
+                    </p>
+
+                </div>
+
+
+                <!-- CO2 -->
+
+                <div class="metric-card">
+
+                    <div class="metric-top">
+
+                        <span class="metric-label">
+                            CO₂ EMISSIONS
+                        </span>
+
+                        <span class="metric-icon">
+                            ◒
+                        </span>
+
+                    </div>
+
+                    <div class="metric-value">
+
+                        <span id="emissionsValue">
+                            9.11E-05
+                        </span>
+
+                        <small>
+                            kg CO₂eq
+                        </small>
+
+                    </div>
+
+                    <p id="emissionsGrams">
+                        0.0911 g CO₂eq
+                    </p>
+
+                </div>
+
+
+                <!-- DURATION -->
+
+                <div class="metric-card">
+
+                    <div class="metric-top">
+
+                        <span class="metric-label">
+                            DURATION
+                        </span>
+
+                        <span class="metric-icon">
+                            ◷
+                        </span>
+
+                    </div>
+
+                    <div class="metric-value">
+
+                        <span id="durationValue">
+                            51.6587
+                        </span>
+
+                        <small>
+                            sec
+                        </small>
+
+                    </div>
+
+                    <p>
+                        Execution duration
+                    </p>
+
+                </div>
+
+
+                <!-- POWER -->
+
+                <div class="metric-card">
+
+                    <div class="metric-top">
+
+                        <span class="metric-label">
+                            TOTAL POWER
+                        </span>
+
+                        <span class="metric-icon">
+                            ◉
+                        </span>
+
+                    </div>
+
+                    <div class="metric-value">
+
+                        <span id="powerValue">
+                            15.17
+                        </span>
+
+                        <small>
+                            W
+                        </small>
+
+                    </div>
+
+                    <p>
+                        CPU + RAM + GPU
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ENERGY BREAKDOWN ================= -->
+
+        <section
+            class="section"
+            id="energy"
+        >
+
+            <div class="section-header">
+
+                <div>
+                    <p class="overline">
+                        ENERGY BREAKDOWN
+                    </p>
+
+                    <h3>
+                        Where energy is being consumed
+                    </h3>
+                </div>
+
+            </div>
+
+
+            <div class="two-column">
+
+
+                <!-- ENERGY COMPONENTS -->
+
+                <div class="card">
+
+                    <div class="energy-item">
+
+                        <div class="energy-heading">
+
+                            <div class="energy-name">
+
+                                <span class="dot cpu"></span>
+
+                                CPU Energy
+
+                            </div>
+
+                            <strong id="cpuEnergy">
+                                0.000074900 kWh
+                            </strong>
+
+                        </div>
+
+                        <div class="progress">
+
+                            <span
+                                id="cpuEnergyBar"
+                                style="width: 36.2%"
+                            ></span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="energy-item">
+
+                        <div class="energy-heading">
+
+                            <div class="energy-name">
+
+                                <span class="dot ram"></span>
+
+                                RAM Energy
+
+                            </div>
+
+                            <strong id="ramEnergy">
+                                0.000131852 kWh
+                            </strong>
+
+                        </div>
+
+                        <div class="progress">
+
+                            <span
+                                id="ramEnergyBar"
+                                style="width: 63.8%"
+                            ></span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="energy-item">
+
+                        <div class="energy-heading">
+
+                            <div class="energy-name">
+
+                                <span class="dot gpu"></span>
+
+                                GPU Energy
+
+                            </div>
+
+                            <strong id="gpuEnergy">
+                                0 kWh
+                            </strong>
+
+                        </div>
+
+                        <div class="progress">
+
+                            <span
+                                id="gpuEnergyBar"
+                                style="width: 0%"
+                            ></span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="insight">
+
+                        <div class="insight-icon">
+                            !
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Energy Optimization Opportunity
+                            </strong>
+
+                            <p>
+                                RAM is responsible for the largest portion
+                                of the estimated energy consumption in this run.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DONUT -->
+
+                <div class="card donut-card">
+
+                    <div
+                        class="donut"
+                        id="energyDonut"
+                    >
+
+                        <div class="donut-content">
+
+                            <strong id="ramPercentage">
+                                63.8%
+                            </strong>
+
+                            <span>
+                                RAM
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="legend">
+
+                        <div>
+                            <span class="dot cpu"></span>
+                            CPU
+                        </div>
+
+                        <div>
+                            <span class="dot ram"></span>
+                            RAM
+                        </div>
+
+                        <div>
+                            <span class="dot gpu"></span>
+                            GPU
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RESOURCE UTILIZATION ================= -->
+
+        <section
+            class="section"
+            id="resources"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="overline">
+                        RESOURCE UTILIZATION
+                    </p>
+
+                    <h3>
+                        System resource usage
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="resource-grid">
+
+
+                <!-- CPU -->
+
+                <div class="card resource-card">
+
+                    <div class="resource-header">
+
+                        <div>
+
+                            <span class="resource-name">
+                                CPU
+                            </span>
+
+                            <p>
+                                AMD Ryzen 5 7430U
+                            </p>
+
+                        </div>
+
+                        <strong id="cpuUtilization">
+                            6.38%
+                        </strong>
+
+                    </div>
+
+                    <div class="large-progress">
+
+                        <span
+                            id="cpuUtilizationBar"
+                            style="width:6.38%"
+                        ></span>
+
+                    </div>
+
+                    <div class="resource-details">
+
+                        <div>
+                            <span>Power</span>
+                            <strong id="cpuPower">
+                                5.17 W
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Energy</span>
+                            <strong>
+                                0.0000749 kWh
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>CPU Count</span>
+                            <strong>
+                                12
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- RAM -->
+
+                <div class="card resource-card">
+
+                    <div class="resource-header">
+
+                        <div>
+
+                            <span class="resource-name">
+                                RAM
+                            </span>
+
+                            <p>
+                                System Memory
+                            </p>
+
+                        </div>
+
+                        <strong id="ramUtilization">
+                            90.46%
+                        </strong>
+
+                    </div>
+
+                    <div class="large-progress">
+
+                        <span
+                            id="ramUtilizationBar"
+                            style="width:90.46%"
+                        ></span>
+
+                    </div>
+
+                    <div class="resource-details">
+
+                        <div>
+                            <span>Power</span>
+                            <strong>
+                                10.00 W
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Energy</span>
+                            <strong>
+                                0.000131852 kWh
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Used</span>
+                            <strong>
+                                6.70 GB
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- GPU -->
+
+                <div class="card resource-card">
+
+                    <div class="resource-header">
+
+                        <div>
+
+                            <span class="resource-name">
+                                GPU
+                            </span>
+
+                            <p>
+                                No GPU detected
+                            </p>
+
+                        </div>
+
+                        <strong>
+                            0%
+                        </strong>
+
+                    </div>
+
+                    <div class="large-progress">
+
+                        <span style="width:0%"></span>
+
+                    </div>
+
+                    <div class="resource-details">
+
+                        <div>
+                            <span>Power</span>
+                            <strong>
+                                0 W
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Energy</span>
+                            <strong>
+                                0 kWh
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>GPU Count</span>
+                            <strong>
+                                0
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ENVIRONMENT ================= -->
+
+        <section
+            class="section"
+            id="environment"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="overline">
+                        SYSTEM ENVIRONMENT
+                    </p>
+
+                    <h3>
+                        Execution environment
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="environment-grid card">
+
+                <div>
+                    <span>Operating System</span>
+                    <strong id="os">
+                        Windows 11
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Python Version</span>
+                    <strong id="pythonVersion">
+                        3.14.3
+                    </strong>
+                </div>
+
+                <div>
+                    <span>CodeCarbon</span>
+                    <strong id="codecarbonVersion">
+                        3.3.0
+                    </strong>
+                </div>
+
+                <div>
+                    <span>CPU Count</span>
+                    <strong>
+                        12
+                    </strong>
+                </div>
+
+                <div>
+                    <span>CPU Model</span>
+                    <strong>
+                        AMD Ryzen 5 7430U with Radeon Graphics
+                    </strong>
+                </div>
+
+                <div>
+                    <span>GPU Model</span>
+                    <strong>
+                        None
+                    </strong>
+                </div>
+
+                <div>
+                    <span>RAM Total</span>
+                    <strong>
+                        7.41 GB
+                    </strong>
+                </div>
+
+                <div>
+                    <span>RAM Used</span>
+                    <strong>
+                        6.70 GB
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Tracking Mode</span>
+                    <strong>
+                        Machine
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Cloud Execution</span>
+                    <strong>
+                        No
+                    </strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ENVIRONMENTAL IMPACT ================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="overline">
+                        ENVIRONMENTAL IMPACT
+                    </p>
+
+                    <h3>
+                        Carbon & water footprint
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="impact-grid card">
+
+                <div class="impact-item">
+
+                    <span>
+                        CO₂ Emissions
+                    </span>
+
+                    <strong>
+                        9.11E-05
+                    </strong>
+
+                    <small>
+                        kg CO₂eq
+                    </small>
+
+                </div>
+
+                <div class="impact-item">
+
+                    <span>
+                        Emissions Rate
+                    </span>
+
+                    <strong>
+                        1.76E-06
+                    </strong>
+
+                    <small>
+                        kg CO₂eq / sec
+                    </small>
+
+                </div>
+
+                <div class="impact-item">
+
+                    <span>
+                        Water Consumed
+                    </span>
+
+                    <strong>
+                        0
+                    </strong>
+
+                    <small>
+                        L
+                    </small>
+
+                </div>
+
+                <div class="impact-item">
+
+                    <span>
+                        PUE
+                    </span>
+
+                    <strong>
+                        1.00
+                    </strong>
+
+                    <small>
+                        Power Usage Effectiveness
+                    </small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RUN METADATA ================= -->
+
+        <section
+            class="section"
+            id="metadata"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="overline">
+                        RUN DETAILS
+                    </p>
+
+                    <h3>
+                        Measurement metadata
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="metadata card">
+
+                <div>
+                    <span>Project Name</span>
+                    <strong id="projectName">
+                        OASIS
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Run ID</span>
+                    <strong id="runId">
+                        76191031-1f09-4c7a-a55b-6025d3adab4f
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Experiment ID</span>
+                    <strong id="experimentId">
+                        5b0fa12a-3dd7-45bb-9766-cc326314d9f1
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Timestamp</span>
+                    <strong id="timestamp">
+                        2026-09-02T15:59:26
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Country</span>
+                    <strong>
+                        Pakistan
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Region</span>
+                    <strong>
+                        Sindh
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Latitude</span>
+                    <strong>
+                        24.8591
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Longitude</span>
+                    <strong>
+                        66.9983
+                    </strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <footer>
+
+            <span>
+                OASIS · Green Software Engineering
+            </span>
+
+            <span>
+                Energy estimation powered by CodeCarbon
+            </span>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OASIS - Combined Analysis</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <div class="logo-icon">O</div>
+            <div>
+                <h1>OASIS</h1>
+                <p>Energy Intelligence</p>
+            </div>
+        </div>
+
+        <nav>
+            <a href="#input" class="active">
+                <span>📁</span>
+                Input
+            </a>
+            <a href="#code-structure">
+                <span>🔍</span>
+                Code Understanding
+            </a>
+            <a href="#energy-overview">
+                <span>⚡</span>
+                Energy
+            </a>
+            <a href="#functions-section">
+                <span>◉</span>
+                Functions
+            </a>
+            <a href="#energy-breakdown">
+                <span>▣</span>
+                Energy Breakdown
+            </a>
+            <a href="#metadata-section">
+                <span>ⓘ</span>
+                Details
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="status-dot"></div>
+            <div>
+                <strong>OASIS Engine</strong>
+                <p id="sidebarStatus">Ready</p>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+    <main class="main">
+
+        <!-- HEADER -->
+        <header class="header">
+            <div>
+                <p class="overline">GREEN SOFTWARE ENGINEERING</p>
+                <h2>Combined Analysis</h2>
+                <p class="subtitle">
+                    Understand code structure and measure energy consumption in one workflow.
+                </p>
+            </div>
+            <div class="header-badge">
+                <span></span>
+                Code Understanding + CodeCarbon
+            </div>
+        </header>
+
+
+        <!-- ================= FILE INPUT ================= -->
+        <section class="card analysis-card" id="input">
+
+            <div class="section-title">
+                <div>
+                    <p class="overline">NEW ANALYSIS</p>
+                    <h3>Analyze a Python file</h3>
+                </div>
+                <span class="step">STEP 01</span>
+            </div>
+
+            <div class="form-grid">
+
+                <!-- FILE PATH -->
+                <div class="form-group full">
+                    <label for="filePath">Python File Path</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">📁</span>
+                        <input
+                            id="filePath"
+                            type="text"
+                            placeholder="D:\projects\my_script.py"
+                        >
+                    </div>
+                    <small>Absolute path to the Python file to analyze.</small>
+                </div>
+
+                <!-- EXECUTION COMMAND -->
+                <div class="form-group">
+                    <label for="execCommand">Execution Command</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">▶</span>
+                        <input
+                            id="execCommand"
+                            type="text"
+                            placeholder="python D:\projects\my_script.py"
+                        >
+                    </div>
+                    <small>Command to execute the file for energy measurement.</small>
+                </div>
+
+                <!-- TIMEOUT -->
+                <div class="form-group">
+                    <label for="timeout">Timeout</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">◷</span>
+                        <input
+                            id="timeout"
+                            type="number"
+                            value="300"
+                            min="10"
+                        >
+                        <span class="input-suffix">seconds</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="analysis-actions">
+                <button id="runCombined" class="primary-button">
+                    <span>⚡</span>
+                    Run Combined Analysis
+                </button>
+                <span id="analysisStatus" class="analysis-status">
+                    Ready to analyze
+                </span>
+            </div>
+
+        </section>
+
+
+        <!-- ================= CODE UNDERSTANDING RESULTS ================= -->
+        <section class="section" id="code-structure" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">CODE UNDERSTANDING</p>
+                    <h3>Code structure overview</h3>
+                </div>
+                <span class="badge success" id="parseStatusBadge">Parsed Successfully</span>
+            </div>
+
+            <div class="metrics-grid">
+
+                <!-- FUNCTIONS -->
+                <div class="metric-card primary">
+                    <div class="metric-top">
+                        <span class="metric-label">FUNCTIONS</span>
+                        <span class="metric-icon">◉</span>
+                    </div>
+                    <div class="metric-value">
+                        <span id="functionCount">0</span>
+                        <small>defined</small>
+                    </div>
+                    <p id="functionNames">-</p>
+                </div>
+
+                <!-- CLASSES -->
+                <div class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">CLASSES</span>
+                        <span class="metric-icon">▣</span>
+                    </div>
+                    <div class="metric-value">
+                        <span id="classCount">0</span>
+                        <small>defined</small>
+                    </div>
+                    <p id="classNames">-</p>
+                </div>
+
+                <!-- LOOPS -->
+                <div class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">LOOPS</span>
+                        <span class="metric-icon">↻</span>
+                    </div>
+                    <div class="metric-value">
+                        <span id="loopCount">0</span>
+                        <small>detected</small>
+                    </div>
+                    <p id="loopDetails">-</p>
+                </div>
+
+                <!-- CONDITIONALS -->
+                <div class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">CONDITIONALS</span>
+                        <span class="metric-icon">Predicate</span>
+                    </div>
+                    <div class="metric-value">
+                        <span id="conditionalCount">0</span>
+                        <small>branches</small>
+                    </div>
+                    <p>if / elif / else</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= CODE DETAILS ================= -->
+        <section class="section" id="code-details" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">ANALYSIS DETAILS</p>
+                    <h3>Deep code inspection</h3>
+                </div>
+            </div>
+
+            <div class="two-column">
+
+                <!-- FUNCTION LIST -->
+                <div class="card detail-card">
+                    <h4 class="detail-title">Functions</h4>
+                    <div id="functionList" class="detail-list"></div>
+                </div>
+
+                <!-- IO & CALLS -->
+                <div class="card detail-card">
+                    <h4 class="detail-title">I/O Operations & Calls</h4>
+                    <div id="ioList" class="detail-list"></div>
+                    <h4 class="detail-title" style="margin-top:20px;">Function Calls</h4>
+                    <div id="callList" class="detail-list"></div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= CLASS DETAILS ================= -->
+        <section class="section" id="class-details" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">CLASSES</p>
+                    <h3>Class structure</h3>
+                </div>
+            </div>
+
+            <div id="classList" class="card detail-card"></div>
+
+        </section>
+
+
+        <!-- ================= COMPLEXITY ================= -->
+        <section class="section" id="complexity-section" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">COMPLEXITY</p>
+                    <h3>Cyclomatic complexity</h3>
+                </div>
+            </div>
+
+            <div class="card" style="padding:25px;">
+                <div id="complexityInfo" class="complexity-grid"></div>
+            </div>
+
+        </section>
+
+
+        <!-- ================= DEPENDENCIES ================= -->
+        <section class="section" id="deps-section" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">DEPENDENCIES</p>
+                    <h3>External imports</h3>
+                </div>
+            </div>
+
+            <div class="card" style="padding:25px;">
+                <div id="depsList" class="deps-grid"></div>
+            </div>
+
+        </section>
+
+
+        <!-- ================= ENERGY OVERVIEW ================= -->
+        <section class="section" id="energy-overview" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">EXECUTION SUMMARY</p>
+                    <h3>Energy overview</h3>
+                </div>
+                <span class="badge success" id="energyBadge">Measurement Available</span>
+            </div>
+
+            <div class="metrics-grid">
+
+                <!-- ENERGY -->
+                <div class="metric-card primary">
+                    <div class="metric-top">
+                        <span class="metric-label">TOTAL ENERGY</span>
+                        <span class="metric-icon">⚡</span>
+                    </div>
+                    <div class="metric-value">
+                        <span id="energyValue">-</span>
+                        <small>kWh</small>
+                    </div>
+                    <p id="energyWh">-</p>
+                </div>
+
+                <!-- CO2 -->
+                <div class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">CO₂ EMISSIONS</span>
+                        <span class="metric-icon">◒</span>
+                    </div>
+                    <div class="metric-value">
+                        <span id="emissionsValue">-</span>
+                        <small>kg CO₂eq</small>
+                    </div>
+                    <p id="emissionsGrams">-</p>
+                </div>
+
+                <!-- DURATION -->
+                <div class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">DURATION</span>
+                        <span class="metric-icon">◷</span>
+                    </div>
+                    <div class="metric-value">
+                        <span id="durationValue">-</span>
+                        <small>sec</small>
+                    </div>
+                    <p>Execution duration</p>
+                </div>
+
+                <!-- POWER -->
+                <div class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">TOTAL POWER</span>
+                        <span class="metric-icon">◉</span>
+                    </div>
+                    <div class="metric-value">
+                        <span id="powerValue">-</span>
+                        <small>W</small>
+                    </div>
+                    <p>CPU + RAM + GPU</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ENERGY BREAKDOWN ================= -->
+        <section class="section" id="energy-breakdown" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">ENERGY BREAKDOWN</p>
+                    <h3>Where energy is being consumed</h3>
+                </div>
+            </div>
+
+            <div class="two-column">
+
+                <div class="card" style="padding:25px;">
+
+                    <div class="energy-item">
+                        <div class="energy-heading">
+                            <div class="energy-name">
+                                <span class="dot cpu"></span>
+                                CPU Energy
+                            </div>
+                            <strong id="cpuEnergy">- kWh</strong>
+                        </div>
+                        <div class="progress">
+                            <span id="cpuEnergyBar" style="width:0%"></span>
+                        </div>
+                    </div>
+
+                    <div class="energy-item">
+                        <div class="energy-heading">
+                            <div class="energy-name">
+                                <span class="dot ram"></span>
+                                RAM Energy
+                            </div>
+                            <strong id="ramEnergy">- kWh</strong>
+                        </div>
+                        <div class="progress">
+                            <span id="ramEnergyBar" style="width:0%"></span>
+                        </div>
+                    </div>
+
+                    <div class="energy-item">
+                        <div class="energy-heading">
+                            <div class="energy-name">
+                                <span class="dot gpu"></span>
+                                GPU Energy
+                            </div>
+                            <strong id="gpuEnergy">- kWh</strong>
+                        </div>
+                        <div class="progress">
+                            <span id="gpuEnergyBar" style="width:0%"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="card donut-card">
+                    <div class="donut" id="energyDonut">
+                        <div class="donut-content">
+                            <strong id="cpuPercentage">0%</strong>
+                            <span>CPU</span>
+                        </div>
+                    </div>
+                    <div class="legend">
+                        <div><span class="dot cpu"></span> CPU</div>
+                        <div><span class="dot ram"></span> RAM</div>
+                        <div><span class="dot gpu"></span> GPU</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RESOURCE UTILIZATION ================= -->
+        <section class="section" id="resources-section" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">RESOURCE UTILIZATION</p>
+                    <h3>System resource usage</h3>
+                </div>
+            </div>
+
+            <div class="resource-grid">
+
+                <div class="card resource-card">
+                    <div class="resource-header">
+                        <div>
+                            <span class="resource-name">CPU</span>
+                            <p id="cpuModel">-</p>
+                        </div>
+                        <strong id="cpuUtilization">- %</strong>
+                    </div>
+                    <div class="large-progress">
+                        <span id="cpuUtilizationBar" style="width:0%"></span>
+                    </div>
+                    <div class="resource-details">
+                        <div>
+                            <span>Power</span>
+                            <strong id="cpuPower">- W</strong>
+                        </div>
+                        <div>
+                            <span>Energy</span>
+                            <strong id="cpuEnergyRes">- kWh</strong>
+                        </div>
+                        <div>
+                            <span>CPU Count</span>
+                            <strong id="cpuCount">-</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card resource-card">
+                    <div class="resource-header">
+                        <div>
+                            <span class="resource-name">RAM</span>
+                            <p>System Memory</p>
+                        </div>
+                        <strong id="ramUtilization">- %</strong>
+                    </div>
+                    <div class="large-progress">
+                        <span id="ramUtilizationBar" style="width:0%"></span>
+                    </div>
+                    <div class="resource-details">
+                        <div>
+                            <span>Power</span>
+                            <strong id="ramPower">- W</strong>
+                        </div>
+                        <div>
+                            <span>Energy</span>
+                            <strong id="ramEnergyRes">- kWh</strong>
+                        </div>
+                        <div>
+                            <span>Used</span>
+                            <strong id="ramUsed">- GB</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card resource-card">
+                    <div class="resource-header">
+                        <div>
+                            <span class="resource-name">GPU</span>
+                            <p id="gpuModel">No GPU detected</p>
+                        </div>
+                        <strong id="gpuUtilization">0%</strong>
+                    </div>
+                    <div class="large-progress">
+                        <span id="gpuUtilizationBar" style="width:0%"></span>
+                    </div>
+                    <div class="resource-details">
+                        <div>
+                            <span>Power</span>
+                            <strong id="gpuPower">0 W</strong>
+                        </div>
+                        <div>
+                            <span>Energy</span>
+                            <strong id="gpuEnergyRes">0 kWh</strong>
+                        </div>
+                        <div>
+                            <span>GPU Count</span>
+                            <strong id="gpuCount">0</strong>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RUN METADATA ================= -->
+        <section class="section" id="metadata-section" style="display:none;">
+
+            <div class="section-header">
+                <div>
+                    <p class="overline">RUN DETAILS</p>
+                    <h3>Measurement metadata</h3>
+                </div>
+            </div>
+
+            <div class="metadata card">
+                <div>
+                    <span>Project Name</span>
+                    <strong id="projectName">OASIS</strong>
+                </div>
+                <div>
+                    <span>Run ID</span>
+                    <strong id="runId">-</strong>
+                </div>
+                <div>
+                    <span>Timestamp</span>
+                    <strong id="timestamp">-</strong>
+                </div>
+                <div>
+                    <span>OS</span>
+                    <strong id="osInfo">-</strong>
+                </div>
+                <div>
+                    <span>Python Version</span>
+                    <strong id="pythonVersion">-</strong>
+                </div>
+                <div>
+                    <span>CodeCarbon Version</span>
+                    <strong id="codecarbonVersion">-</strong>
+                </div>
+            </div>
+
+        </section>
+
+
+        <footer>
+            <span>OASIS · Green Software Engineering</span>
+            <span>Code Understanding · CodeCarbon</span>
+        </footer>
+
+    </main>
+
+</div>
+
+<script src="app_analysis.js"></script>
+
+</body>
+</html>

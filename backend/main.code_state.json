@@ -1,0 +1,237 @@
+{
+  "language": "python",
+  "path": "C:\\MyWorks\\University\\FYP\\EASE\\OASIS\\backend\\main.py",
+  "functions": [
+    {
+      "name": "root",
+      "start_line": 57,
+      "end_line": 67,
+      "arguments": [],
+      "decorators": [
+        "app.get(\"/\")"
+      ],
+      "complexity": 1
+    },
+    {
+      "name": "health",
+      "start_line": 75,
+      "end_line": 81,
+      "arguments": [],
+      "decorators": [
+        "app.get(\"/api/health\")"
+      ],
+      "complexity": 1
+    },
+    {
+      "name": "estimate_energy",
+      "start_line": 89,
+      "end_line": 226,
+      "arguments": [
+        "request"
+      ],
+      "decorators": [
+        "app.post(\"/api/energy/estimate\")"
+      ],
+      "complexity": 4
+    }
+  ],
+  "classes": [
+    {
+      "name": "EnergyRequest",
+      "start_line": 43,
+      "end_line": 49,
+      "methods": []
+    }
+  ],
+  "loops": [],
+  "conditionals": 0,
+  "function_calls": [
+    {
+      "name": "FastAPI",
+      "line": 14,
+      "argument_count": 2
+    },
+    {
+      "name": "add_middleware",
+      "line": 24,
+      "argument_count": 5
+    },
+    {
+      "name": "get",
+      "line": 56,
+      "argument_count": 1
+    },
+    {
+      "name": "get",
+      "line": 74,
+      "argument_count": 1
+    },
+    {
+      "name": "post",
+      "line": 88,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 95,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 96,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 97,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 98,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 100,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 104,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 108,
+      "argument_count": 1
+    },
+    {
+      "name": "Project",
+      "line": 117,
+      "argument_count": 1
+    },
+    {
+      "name": "ProjectExecutor",
+      "line": 126,
+      "argument_count": 3
+    },
+    {
+      "name": "str",
+      "line": 130,
+      "argument_count": 1
+    },
+    {
+      "name": "EnergyEstimator",
+      "line": 143,
+      "argument_count": 1
+    },
+    {
+      "name": "estimate",
+      "line": 154,
+      "argument_count": 1
+    },
+    {
+      "name": "str",
+      "line": 165,
+      "argument_count": 1
+    },
+    {
+      "name": "get_file_count",
+      "line": 171,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 178,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 179,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 184,
+      "argument_count": 1
+    },
+    {
+      "name": "HTTPException",
+      "line": 192,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 196,
+      "argument_count": 1
+    },
+    {
+      "name": "HTTPException",
+      "line": 203,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 207,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 214,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 215,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 217,
+      "argument_count": 1
+    },
+    {
+      "name": "HTTPException",
+      "line": 220,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 224,
+      "argument_count": 1
+    }
+  ],
+  "data_structures": [
+    "list",
+    "dictionary"
+  ],
+  "io_operations": [
+    "print (line 95)",
+    "print (line 96)",
+    "print (line 97)",
+    "print (line 98)",
+    "print (line 100)",
+    "print (line 104)",
+    "print (line 108)",
+    "print (line 178)",
+    "print (line 179)",
+    "print (line 184)",
+    "print (line 214)",
+    "print (line 215)"
+  ],
+  "complexity": {
+    "measured": 3,
+    "max": 4,
+    "total": 6
+  },
+  "allocations": 5,
+  "dependencies": [
+    "fastapi",
+    "fastapi",
+    "pydantic",
+    "modules",
+    "modules",
+    "modules"
+  ]
+}
