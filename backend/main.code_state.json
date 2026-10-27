@@ -4,8 +4,8 @@
   "functions": [
     {
       "name": "root",
-      "start_line": 57,
-      "end_line": 67,
+      "start_line": 67,
+      "end_line": 77,
       "arguments": [],
       "decorators": [
         "app.get(\"/\")"
@@ -14,8 +14,8 @@
     },
     {
       "name": "health",
-      "start_line": 75,
-      "end_line": 81,
+      "start_line": 85,
+      "end_line": 91,
       "arguments": [],
       "decorators": [
         "app.get(\"/api/health\")"
@@ -24,8 +24,8 @@
     },
     {
       "name": "estimate_energy",
-      "start_line": 89,
-      "end_line": 226,
+      "start_line": 99,
+      "end_line": 235,
       "arguments": [
         "request"
       ],
@@ -33,72 +33,75 @@
         "app.post(\"/api/energy/estimate\")"
       ],
       "complexity": 4
+    },
+    {
+      "name": "analyze_code",
+      "start_line": 243,
+      "end_line": 6887,
+      "arguments": [
+        "request"
+      ],
+      "decorators": [
+        "app.post(\"/api/code/analyze\")"
+      ],
+      "complexity": 5
     }
   ],
   "classes": [
     {
       "name": "EnergyRequest",
-      "start_line": 43,
-      "end_line": 49,
+      "start_line": 46,
+      "end_line": 52,
+      "methods": []
+    },
+    {
+      "name": "CodeAnalysisRequest",
+      "start_line": 55,
+      "end_line": 59,
       "methods": []
     }
   ],
   "loops": [],
-  "conditionals": 0,
+  "conditionals": 1,
   "function_calls": [
     {
       "name": "FastAPI",
-      "line": 14,
+      "line": 17,
       "argument_count": 2
     },
     {
       "name": "add_middleware",
-      "line": 24,
+      "line": 27,
       "argument_count": 5
     },
     {
       "name": "get",
-      "line": 56,
+      "line": 66,
       "argument_count": 1
     },
     {
       "name": "get",
-      "line": 74,
+      "line": 84,
       "argument_count": 1
     },
     {
       "name": "post",
-      "line": 88,
-      "argument_count": 1
-    },
-    {
-      "name": "print",
-      "line": 95,
-      "argument_count": 0
-    },
-    {
-      "name": "print",
-      "line": 96,
-      "argument_count": 1
-    },
-    {
-      "name": "print",
-      "line": 97,
-      "argument_count": 1
-    },
-    {
-      "name": "print",
       "line": 98,
       "argument_count": 1
     },
     {
       "name": "print",
-      "line": 100,
+      "line": 105,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 106,
       "argument_count": 1
     },
     {
       "name": "print",
-      "line": 104,
+      "line": 107,
       "argument_count": 1
     },
     {
@@ -107,83 +110,83 @@
       "argument_count": 1
     },
     {
+      "name": "print",
+      "line": 110,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 114,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 118,
+      "argument_count": 1
+    },
+    {
       "name": "Project",
-      "line": 117,
+      "line": 127,
       "argument_count": 1
     },
     {
       "name": "ProjectExecutor",
-      "line": 126,
+      "line": 136,
       "argument_count": 3
     },
     {
       "name": "str",
-      "line": 130,
+      "line": 140,
       "argument_count": 1
     },
     {
       "name": "EnergyEstimator",
-      "line": 143,
+      "line": 153,
       "argument_count": 1
     },
     {
       "name": "estimate",
-      "line": 154,
+      "line": 164,
       "argument_count": 1
     },
     {
       "name": "str",
-      "line": 165,
+      "line": 175,
       "argument_count": 1
     },
     {
       "name": "get_file_count",
-      "line": 171,
+      "line": 181,
       "argument_count": 0
     },
     {
       "name": "print",
-      "line": 178,
+      "line": 188,
       "argument_count": 0
     },
     {
       "name": "print",
-      "line": 179,
+      "line": 189,
       "argument_count": 1
     },
     {
       "name": "print",
-      "line": 184,
+      "line": 194,
       "argument_count": 1
     },
     {
       "name": "HTTPException",
-      "line": 192,
+      "line": 202,
       "argument_count": 2
     },
     {
       "name": "str",
-      "line": 196,
+      "line": 206,
       "argument_count": 1
     },
     {
       "name": "HTTPException",
-      "line": 203,
-      "argument_count": 2
-    },
-    {
-      "name": "str",
-      "line": 207,
-      "argument_count": 1
-    },
-    {
-      "name": "print",
-      "line": 214,
-      "argument_count": 0
-    },
-    {
-      "name": "print",
-      "line": 215,
+      "line": 213,
       "argument_count": 2
     },
     {
@@ -192,13 +195,193 @@
       "argument_count": 1
     },
     {
-      "name": "HTTPException",
-      "line": 220,
+      "name": "print",
+      "line": 224,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 225,
       "argument_count": 2
     },
     {
       "name": "str",
-      "line": 224,
+      "line": 227,
+      "argument_count": 1
+    },
+    {
+      "name": "HTTPException",
+      "line": 230,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 234,
+      "argument_count": 1
+    },
+    {
+      "name": "post",
+      "line": 242,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 249,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 250,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 251,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 252,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 254,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 349,
+      "argument_count": 1
+    },
+    {
+      "name": "Path",
+      "line": 6887,
+      "argument_count": 1
+    },
+    {
+      "name": "exists",
+      "line": 349,
+      "argument_count": 0
+    },
+    {
+      "name": "FileNotFoundError",
+      "line": 6887,
+      "argument_count": 1
+    },
+    {
+      "name": "read_text",
+      "line": 349,
+      "argument_count": 1
+    },
+    {
+      "name": "parse_code",
+      "line": 6887,
+      "argument_count": 3
+    },
+    {
+      "name": "str",
+      "line": 349,
+      "argument_count": 1
+    },
+    {
+      "name": "to_dict",
+      "line": 6887,
+      "argument_count": 0
+    },
+    {
+      "name": "len",
+      "line": 349,
+      "argument_count": 1
+    },
+    {
+      "name": "encode",
+      "line": 6887,
+      "argument_count": 1
+    },
+    {
+      "name": "len",
+      "line": 349,
+      "argument_count": 1
+    },
+    {
+      "name": "splitlines",
+      "line": 6887,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 349,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 6887,
+      "argument_count": 1
+    },
+    {
+      "name": "len",
+      "line": 349,
+      "argument_count": 1
+    },
+    {
+      "name": "len",
+      "line": 6887,
+      "argument_count": 1
+    },
+    {
+      "name": "len",
+      "line": 349,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 6887,
+      "argument_count": 1
+    },
+    {
+      "name": "HTTPException",
+      "line": 349,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 6887,
+      "argument_count": 1
+    },
+    {
+      "name": "HTTPException",
+      "line": 349,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 6887,
+      "argument_count": 1
+    },
+    {
+      "name": "print",
+      "line": 349,
+      "argument_count": 0
+    },
+    {
+      "name": "print",
+      "line": 6887,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 349,
+      "argument_count": 1
+    },
+    {
+      "name": "HTTPException",
+      "line": 6887,
+      "argument_count": 2
+    },
+    {
+      "name": "str",
+      "line": 349,
       "argument_count": 1
     }
   ],
@@ -207,29 +390,42 @@
     "dictionary"
   ],
   "io_operations": [
-    "print (line 95)",
-    "print (line 96)",
-    "print (line 97)",
-    "print (line 98)",
-    "print (line 100)",
-    "print (line 104)",
+    "print (line 105)",
+    "print (line 106)",
+    "print (line 107)",
     "print (line 108)",
-    "print (line 178)",
-    "print (line 179)",
-    "print (line 184)",
-    "print (line 214)",
-    "print (line 215)"
+    "print (line 110)",
+    "print (line 114)",
+    "print (line 118)",
+    "print (line 188)",
+    "print (line 189)",
+    "print (line 194)",
+    "print (line 224)",
+    "print (line 225)",
+    "print (line 249)",
+    "print (line 250)",
+    "print (line 251)",
+    "print (line 252)",
+    "print (line 254)",
+    "print (line 258)",
+    "print (line 306)",
+    "print (line 307)",
+    "print (line 313)",
+    "print (line 339)",
+    "print (line 340)"
   ],
   "complexity": {
-    "measured": 3,
-    "max": 4,
-    "total": 6
+    "measured": 4,
+    "max": 5,
+    "total": 11
   },
   "allocations": 5,
   "dependencies": [
+    "pathlib",
     "fastapi",
     "fastapi",
     "pydantic",
+    "modules",
     "modules",
     "modules",
     "modules"

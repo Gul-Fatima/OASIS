@@ -1,0 +1,32 @@
+# ============================================================
+# OASIS backend + modules
+#   pip install -r requirements.txt
+# ============================================================
+
+# --- API layer -------------------------------------------------
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2
+
+# --- Outbound HTTP (Gemini client in candidate_generation) -----
+httpx>=0.27
+
+# --- Code parsing ---------------------------------------------
+tree-sitter>=0.22
+tree-sitter-python>=0.21
+
+# --- Energy measurement ---------------------------------------
+codecarbon>=2.5
+pandas>=2.0
+psutil>=5.9
+
+# --- Optional: cyclomatic complexity --------------------------
+radon>=6.0
+
+# --- Optional: extra language grammars ------------------------
+# Detection and parsing for these languages degrade gracefully
+# (adapters are registered only when the grammar is importable).
+# tree-sitter-java
+# tree-sitter-c
+# tree-sitter-cpp
+# tree-sitter-javascript

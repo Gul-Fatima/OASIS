@@ -1,2 +1,22 @@
-claude.md
+# Python
 venv
+.venv
+__pycache__/
+*.py[cod]
+
+# Secrets — never commit keys
+.env
+.env.local
+
+# Node / Next.js
+node_modules/
+.next/
+
+# Measurement artifacts (regenerate by re-running an experiment)
+results/emissions.csv
+results/benchmark/
+
+# Editor / OS
+.DS_Store
+
+claude.md

@@ -2,55 +2,71 @@
 
 > **An AI-assisted software energy optimization and empirical validation framework.**
 
-OASIS is a research project (SE-499 Final Year Design) that analyzes source code, identifies potential energy optimization opportunities, generates alternative implementations, verifies functional correctness, measures actual energy consumption under controlled execution, and presents evidence to the developer for an accept/reject decision.
+OASIS is a research project (SE-499 Final Year Design) that analyzes source code,
+identifies potential energy optimization opportunities, generates alternative
+implementations, verifies functional correctness, measures actual energy
+consumption under controlled execution, and presents evidence to the developer
+for an accept/reject decision.
 
-**Core principle: _Prediction is not measurement._** The system never claims an optimization saves energy based solely on prediction. Actual improvement must be empirically validated.
+**Core principle: _Prediction is not measurement._**
+The system never claims an optimization saves energy based solely on prediction.
+Actual improvement must be empirically validated.
 
 ---
 
 ## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
+- [Core Pipeline](#core-pipeline)
 - [Project Structure](#project-structure)
 - [Modules](#modules)
-- [Frontend Dashboards](#frontend-dashboards)
+- [Frontend (Next.js)](#frontend-nextjs)
 - [Backend API](#backend-api)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Running the Application](#running-the-application)
 - [Usage Examples](#usage-examples)
-- [API Reference](#api-reference)
+- [Configuration](#configuration)
 - [How It Works](#how-it-works)
 - [Research Integrity](#research-integrity)
+- [Known Limitations](#known-limitations)
 
 ---
 
 ## Architecture Overview
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                   PRESENTATION LAYER                     │
-│  index.html  ·  analysis.html  ·  style.css  ·  app.js  │
-└────────────────────────┬─────────────────────────────────┘
-                         │  HTTP / JSON
-┌────────────────────────▼─────────────────────────────────┐
-│                    APPLICATION LAYER                     │
-│           FastAPI backend (backend/main.py)              │
-│  ┌─────────────────────┐  ┌────────────────────────────┐ │
-│  │  Code Understanding │  │   Energy Estimation        │ │
-│  │  tree-sitter parser │  │   CodeCarbon tracker       │ │
-│  │  AST walker         │  │   subprocess executor      │ │
-│  │  feature extraction │  │   emissions measurement    │ │
-│  └─────────────────────┘  └────────────────────────────┘ │
-└────────────────────────┬─────────────────────────────────┘
-                         │
-┌────────────────────────▼─────────────────────────────────┐
-│                      DATA LAYER                          │
-│        CodeState JSON · Emissions CSV · Results/         │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     PRESENTATION LAYER                       │
+│        Next.js app (frontend/) — App Router + Tailwind       │
+│   dashboard · combined analysis · energy · detection ·       │
+│   optimization pipeline · taxonomy · history · settings      │
+└───────────────────────────┬──────────────────────────────────┘
+                            │  HTTP / JSON + SSE
+┌───────────────────────────▼──────────────────────────────────┐
+│                     APPLICATION LAYER                        │
+│                FastAPI backend (backend/)                    │
+│   main.py              energy + code understanding routes     │
+│   routes_candidates.py candidate pipeline + SSE orchestrator  │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+┌───────────────────────────▼──────────────────────────────────┐
+│                       DOMAIN MODULES                         │
+│  code_understanding → energy_detection → candidate_generation │
+│  → candidate_ranking → verification → benchmarking →          │
+│  optimization_decision                                        │
+│  energy_estimation (CodeCarbon) · analysis (CFG/EFG)          │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+┌───────────────────────────▼──────────────────────────────────┐
+│                         DATA LAYER                           │
+│     CodeState JSON · emissions.csv · decisions.jsonl         │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Core Pipeline
+---
+
+## Core Pipeline
 
 ```
 Source Code
@@ -59,19 +75,21 @@ Code Parser (tree-sitter)
     ↓
 Code Understanding (CodeState)
     ↓
-Optimization Opportunity Detection
+Energy Smell Detection        ← hypothesis, never proof
     ↓
 Baseline Measurement (CodeCarbon)
     ↓
-Candidate Generation
+Candidate Generation (LLM)
     ↓
-Correctness Verification
+Candidate Ranking             ← prioritisation, never validation
     ↓
-Energy Measurement
+Correctness Verification      ← gate 1
     ↓
-Original vs Candidate Comparison
+Energy Benchmarking           ← gate 2, measured
     ↓
-Human Accept/Reject Decision
+Optimization Decision         ← measured energy vs noise floor
+    ↓
+Human Accept / Reject
 ```
 
 ---
@@ -80,52 +98,46 @@ Human Accept/Reject Decision
 
 ```
 OASIS/
-│
 ├── README.md
-├── CLAUDE.md
+├── claude.md
+├── requirements.txt
+├── .env.example
+├── run.sh
 │
-├── frontend/
-│   ├── index.html          # Energy estimation dashboard
-│   ├── analysis.html       # Combined analysis dashboard
-│   ├── style.css           # Shared styles
-│   ├── app.js              # Energy estimation logic
-│   └── app_analysis.js     # Combined analysis logic
+├── frontend/                     Next.js application
+│   ├── app/                      routes (App Router)
+│   │   ├── page.tsx              dashboard
+│   │   ├── analyze/              combined analysis
+│   │   ├── energy/               energy measurement
+│   │   ├── detect/               energy smell detection
+│   │   ├── candidates/           optimization pipeline
+│   │   ├── taxonomy/             taxonomy browser
+│   │   ├── history/              decision history
+│   │   └── settings/             configuration
+│   ├── components/               AppShell, Disclosure, ui, per-page views
+│   ├── lib/                      api client, types, formatting
+│   └── README.md / claude.md
 │
 ├── backend/
-│   ├── main.py             # FastAPI server (API endpoints)
+│   ├── main.py                   energy + code understanding routes
+│   ├── routes_candidates.py      candidate pipeline routes + SSE orchestrator
 │   └── claude.md
 │
 ├── modules/
-│   ├── main.py             # CLI entry point for energy estimation
+│   ├── config.py                 .env loading + env accessors
+│   ├── main.py                   CLI entry point for energy estimation
 │   │
-│   ├── code_understanding/
-│   │   ├── __init__.py
-│   │   ├── model.py        # CodeState data model
-│   │   ├── parser.py       # tree-sitter based parser
-│   │   ├── adapters.py     # Per-language adapters
-│   │   ├── main.py         # CLI entry point
-│   │   └── claude.md
-│   │
-│   ├── energy_estimation/
-│   │   ├── __init__.py
-│   │   ├── estimator.py    # CodeCarbon energy tracker
-│   │   ├── executor.py     # Subprocess project executor
-│   │   ├── project.py      # Project file loader
-│   │   ├── report.py       # Console report display
-│   │   └── claude.md
-│   │
-│   ├── energy_detection/
-│   ├── candidate_generation/
-│   ├── candidate_ranking/
-│   ├── verification/
-│   ├── benchmarking/
-│   └── optimization_decision/
+│   ├── code_understanding/       parser, adapters, folder scan, CodeState model
+│   ├── energy_estimation/        CodeCarbon estimator, executor, project
+│   ├── energy_detection/         taxonomy, OKEB rule base, matcher, detector, prompts
+│   ├── candidate_generation/     Gemini client, generator, prompts
+│   ├── candidate_ranking/        ranking weights + scoring
+│   ├── verification/             validator + orchestration service
+│   ├── benchmarking/             comparator + original-vs-candidate service
+│   ├── optimization_decision/    decision rules + decision history
+│   └── analysis/                 CFG / EFG data structures (library only)
 │
-├── database/
-├── experiments/
-├── results/
-├── docs/
-└── tests/
+├── database/  experiments/  results/  docs/  third_party/
 ```
 
 ---
@@ -134,31 +146,43 @@ OASIS/
 
 | Module | Responsibility | Status |
 |--------|---------------|--------|
-| **Code Understanding** | Parse source code into structured `CodeState` representation | ✅ Being Implemented |
-| **Energy Estimation** | Execute code and measure energy consumption via CodeCarbon | ✅ Being Implemented |
-| **Energy Detection** | Identify potential energy optimization patterns | 🔲 Planned |
-| **Candidate Generation** | Generate alternative implementations | 🔲 Planned |
-| **Candidate Ranking** | Prioritize candidates by energy potential and risk | 🔲 Planned |
-| **Verification** | Check functional correctness of candidates | 🔲 Planned |
-| **Benchmarking** | Execute and compare original vs optimized versions | 🔲 Planned |
-| **Optimization Decision** | Combine results for human review | 🔲 Planned |
+| **Code Understanding** | Parse source code into a structured `CodeState` (tree-sitter, multi-language, folder scan) | ✅ Implemented |
+| **Energy Detection** | Rule-based detection of energy smells mapped to the taxonomy | ✅ Implemented |
+| **Energy Estimation** | Execute code and measure energy consumption via CodeCarbon | ✅ Implemented |
+| **Candidate Generation** | LLM-assisted generation of alternative implementations (Google Gemini) | ✅ Implemented |
+| **Candidate Ranking** | Prioritise candidates by predicted impact, confidence, coverage and rewrite risk | ✅ Implemented |
+| **Verification** | Syntax + behaviour comparison of candidate against original | ✅ Implemented |
+| **Benchmarking** | Warm-up then N measured runs of original vs candidate, with spread analysis | ✅ Implemented |
+| **Optimization Decision** | Combine correctness + measured energy into an outcome and record the developer decision | ✅ Implemented |
+| **Analysis (CFG/EFG)** | Control-flow and energy-flow graph structures | ⚠️ Library only — not wired into the pipeline |
 
 ---
 
-## Frontend Dashboards
+## Frontend (Next.js)
 
-### Energy Estimation Dashboard (`index.html`)
-- File input with execution command and timeout
-- Real-time CodeCarbon energy measurement
-- Energy breakdown (CPU / RAM / GPU)
-- Resource utilization metrics
-- System environment and metadata
+The UI is a Next.js (App Router, TypeScript, Tailwind CSS v4) application in
+`frontend/`. It replaces the earlier static HTML dashboards.
 
-### Combined Analysis Dashboard (`analysis.html`)
-- Analyzes **code structure** and **energy consumption** in one workflow
-- **Step 1:** Parse file → functions, classes, loops, complexity, dependencies, IO ops
-- **Step 2:** Execute file → energy, CO₂, duration, resource utilization
-- Results displayed section-by-section on a single page
+| Route | Purpose |
+|---|---|
+| `/` | **Optimize**: choose a file, review issues + strategies, copy the LLM prompt |
+| `/analyze` | Parse a file or folder, then measure its energy in one run |
+| `/energy` | CodeCarbon measurement, including continuous mode for servers |
+| `/detect` | Static energy smell detection, grouped by taxonomy category |
+| `/candidates` | Full pipeline: generate → rank → verify → benchmark → decide → accept/reject |
+| `/taxonomy` | The 12-category, 65-subcategory energy smell taxonomy |
+| `/history` | Recorded accept/reject decisions |
+| `/settings` | Backend, LLM and language configuration |
+
+The sidebar deliberately exposes only `/` (Optimize), `/history` and
+`/settings`; the remaining routes are deeper tooling, reachable by URL rather
+than part of the day-to-day flow.
+
+**Layout rule:** every dashboard is summary-first — headline metric cards at the
+top, detailed tables and raw payloads inside collapsed disclosures (native
+`<details>`, nested where useful). The candidate cards deliberately render
+*predicted* impact and *measured* improvement as separate, differently styled
+figures.
 
 ---
 
@@ -166,137 +190,278 @@ OASIS/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/` | Application status |
+| `GET` | `/` | API status (or the legacy dashboard if present) |
 | `GET` | `/api/health` | Health check |
-| `POST` | `/api/code/analyze` | Parse a Python file into CodeState |
-| `POST` | `/api/energy/estimate` | Execute project and measure energy |
+| `POST` | `/api/optimize` | Analyse a file (`file_path` or uploaded `source`) and return issues + a copyable LLM prompt |
+| `GET` | `/api/languages` | Supported languages and file extensions |
+| `GET` | `/api/taxonomy` | Full energy smell taxonomy |
+| `POST` | `/api/detect` | Detect energy smells in a single file |
+| `POST` | `/api/code/analyze` | Parse a file into `CodeState` |
+| `POST` | `/api/code/analyze/folder` | Parse every supported file under a folder (aggregated) |
+| `POST` | `/api/code/analyze/stream` | Folder scan with SSE progress events |
+| `POST` | `/api/energy/estimate` | Execute a project and measure energy |
+| `POST` | `/api/energy/estimate/stream` | Stream live/heartbeat energy metrics (SSE) |
+| `POST` | `/api/energy/stop` | Stop the running measurement (continuous mode) |
+| `GET` | `/api/llm/status` | Whether candidate generation is configured (never the key) |
+| `GET` | `/api/llm/models` | Models available to the configured key |
+| `POST` | `/api/candidates/generate` | Detect (optional) + generate optimization candidates |
+| `POST` | `/api/candidates/rank` | Re-rank candidates, optionally with custom weights |
+| `POST` | `/api/candidates/verify` | Check that a candidate still behaves like the original |
+| `POST` | `/api/candidates/benchmark` | Measure energy for original vs candidate |
+| `POST` | `/api/candidates/decision` | Classify a candidate from its evidence |
+| `POST` | `/api/candidates/decision/record` | Store a developer accept/reject action |
+| `GET` | `/api/candidates/history` | Recent optimization decisions |
+| `POST` | `/api/pipeline/run/stream` | Whole pipeline as SSE progress events |
 
 ---
 
 ## Prerequisites
 
 - **Python 3.10+** (developed on Python 3.14)
-- **pip**
-
-### Python Dependencies
-
-```
-fastapi
-uvicorn[standard]
-pydantic
-tree-sitter
-tree-sitter-python
-codecarbon
-pandas
-radon              (optional — for cyclomatic complexity)
-```
+- **Node.js 18+** and npm (developed on Node 24) — for the frontend only
 
 ---
 
 ## Installation
 
+### Backend
+
 ```bash
-# Clone the repository
-git clone <repo-url>
 cd OASIS
+pip install -r requirements.txt
 
-# Install Python dependencies
-pip install fastapi uvicorn pydantic tree-sitter tree-sitter-python codecarbon pandas
-
-# Optional: cyclomatic complexity metrics
-pip install radon
+# Optional: extra language grammars for Java / C / C++ / JavaScript
+pip install tree-sitter-java tree-sitter-c tree-sitter-cpp tree-sitter-javascript
 ```
+
+### Frontend
+
+```bash
+cd OASIS/frontend
+npm install
+```
+
+### Configuration
+
+```bash
+cd OASIS
+cp .env.example .env      # then add your GEMINI_API_KEY
+```
+
+Without an API key everything still works except candidate generation: detection,
+energy measurement and benchmarking all run normally.
 
 ---
 
 ## Running the Application
 
-### Backend API Server
-
-**Important:** Always run from the **project root directory**, not from inside `backend/`.
+Two processes: the API and the UI. Start the backend from the **OASIS root**,
+not from inside `backend/`.
 
 ```bash
-# From the OASIS root directory:
-python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+# terminal 1 — from OASIS/
+uvicorn backend.main:app --port 8000 --reload
+
+# terminal 2 — from OASIS/frontend/
+npm run dev
 ```
 
-The API will be available at `http://localhost:8000`.
+| Service | URL |
+|---|---|
+| UI | http://localhost:3000 |
+| API | http://localhost:8000 |
+| Interactive API docs | http://localhost:8000/docs |
 
-Interactive docs: `http://localhost:8000/docs`
+`./run.sh` starts the backend and opens the API docs.
 
-### Energy Estimation Dashboard
+The UI is one workflow: **Optimize** (http://localhost:3000) — choose a Python
+file, review the issues with their taxonomy label and knowledge-base strategy,
+then copy the generated prompt into an LLM. The file is analysed, never run.
 
-1. Start the backend server
-2. Open `frontend/index.html` in your browser
-3. Enter a project path and execution command
-4. Click **Run Energy Analysis**
+The matcher itself is still verifiable from the command line: every implemented
+rule has one snippet it must flag and one it must leave alone
+(`modules/energy_detection/selftest.py`), enforced by `pytest`.
 
-### Combined Analysis Dashboard
-
-1. Start the backend server
-2. Open `frontend/analysis.html` in your browser
-3. Enter a Python file path and execution command
-4. Click **Run Combined Analysis**
-
-### CLI Tools
-
-**Code Understanding:**
+### CLI tools
 
 ```bash
 cd modules
-python code_understanding/main.py
-# Enter path to a Python file when prompted
-```
+python code_understanding/main.py    # parse a file
+python main.py                       # measure energy
 
-**Energy Estimation:**
-
-```bash
-cd modules
-python main.py
-# Enter project path and execution command when prompted
+# from the OASIS root — match one file against the structural rules
+python -m modules.energy_detection.matcher path/to/file.py
 ```
 
 ---
 
 ## Usage Examples
 
-### Code Understanding via API
+### Energy smell detection
 
 ```bash
-curl -X POST http://localhost:8000/api/code/analyze \
+curl -X POST http://localhost:8000/api/detect \
   -H "Content-Type: application/json" \
-  -d '{"file_path": "D:\projects\my_script.py", "language": "python"}'
+  -d '{"file_path": "D:/projects/my_project/main.py", "language": "auto"}'
 ```
 
-Response:
+### Optimize a file (issues + copyable prompt)
 
-```json
-{
-  "language": "python",
-  "path": "D:\projects\my_script.py",
-  "functions": [
-    {
-      "name": "hello",
-      "start_line": 1,
-      "end_line": 3,
-      "arguments": ["name"],
-      "decorators": [],
-      "complexity": 1
-    }
-  ],
-  "classes": [],
-  "loops": [],
-  "conditionals": 0,
-  "function_calls": [...],
-  "io_operations": ["print (line 2)"],
-  "complexity": {"measured": 1, "max": 1, "total": 1},
-  "file_size": 1024,
-  "line_count": 10
-}
+```bash
+curl -X POST http://localhost:8000/api/optimize \
+  -H "Content-Type: application/json" \
+  -d '{"file_path": "D:/projects/my_project/main.py"}'
 ```
 
-### Energy Estimation via API
+Returns `issues[]` (taxonomy label, location, strategy, example rewrite) and a
+`prompt` string ready for an LLM. Pass `{"source": "...", "filename": "main.py"}`
+instead of `file_path` to analyse text that is not on disk.
+
+### Rule base (developer tooling)
+
+```bash
+curl http://localhost:8000/api/rules                    # rules + matcher coverage
+curl http://localhost:8000/api/rules/selftest           # matcher self-test
+```
+
+### Full optimization pipeline (SSE)
+
+```bash
+curl -N -X POST http://localhost:8000/api/pipeline/run/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+        "file_path": "D:/projects/my_project/main.py",
+        "command": "python main.py",
+        "project_path": "D:/projects/my_project",
+        "num_candidates": 2,
+        "runs": 3,
+        "warmup_runs": 1,
+        "min_improvement_percent": 5
+      }'
+```
+
+Events are streamed as `{"type": "progress" | "partial" | "result" | "error"}`.
+
+### Generate candidates only
+
+```bash
+curl -X POST http://localhost:8000/api/candidates/generate \
+  -H "Content-Type: application/json" \
+  -d '{"file_path": "D:/projects/my_project/main.py", "num_candidates": 2}'
+```
+
+### Measure a project
 
 ```bash
 curl -X POST http://localhost:8000/api/energy/estimate \
-  -H "Content-Type: a
+  -H "Content-Type: application/json" \
+  -d '{"project_path": "D:/projects/my_project", "command": "python main.py", "timeout": 300}'
+```
+
+---
+
+## Configuration
+
+Environment variables are read from `OASIS/.env` (see `.env.example`).
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `GEMINI_API_KEY` | — | Required for candidate generation |
+| `GEMINI_MODEL` | `gemini-3.8-flash` | Model used for generation |
+| `GEMINI_API_BASE` | Google Generative Language API | Override for a proxy/gateway |
+| `GEMINI_TIMEOUT_SECONDS` | `120` | Per-request timeout |
+| `GEMINI_MAX_OUTPUT_TOKENS` | `8192` | Output cap (truncation is reported as an error) |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://127.0.0.1:8000` | Frontend → backend base URL (in `frontend/.env.local`) |
+
+---
+
+## How It Works
+
+### 1. Code understanding
+`modules/code_understanding` parses source with tree-sitter into a `CodeState`
+(functions, classes, loops, conditionals, calls, I/O operations, dependencies,
+complexity). This representation makes **no energy claims**.
+
+### 2. Energy smell detection
+
+There are two detectors, sharing one taxonomy:
+
+* `modules/energy_detection/detector.py` runs small, individually testable rules
+  over the `CodeState` and labels each match with a taxonomy subcategory. Each
+  detection records `evidence: "static pattern match"`. This is what
+  `/api/detect` uses today.
+* `modules/energy_detection/matcher.py` matches tree-sitter node shapes, binds
+  the names the strategy needs, checks the rule's preconditions and attaches the
+  strategy text from `okeb.json` (`rulebase.py` indexes it). It is Python-only
+  and covers 8 of the 160 knowledge-base rules so far; it is not yet wired into
+  `/api/detect`.
+
+`okeb.json` is aligned one-way onto `modules/energy_detection/taxonomy.py`, which
+mirrors `third_party/energy-smells/taxonomy.md` (12 categories, 65
+subcategories). Every rule stores its `category_name`/`subcategory_name`, so
+labels never have to be re-derived. To verify or re-apply the alignment after
+editing the rule base:
+
+```bash
+python -m modules.energy_detection.okeb_align --check   # exit 1 on drift
+python -m modules.energy_detection.okeb_align --write   # rewrite okeb.json
+```
+
+### 3. Candidate generation
+`modules/candidate_generation` renders the detections into a prompt and asks
+Gemini for an optimized version that preserves functional correctness. The
+model's `estimated_impact` is stored as `predicted_impact` — a prediction, with
+`measurement_available: false`.
+
+### 4. Ranking
+`modules/candidate_ranking` scores candidates from predicted impact, model
+confidence, how much of the detected smell set they address, and a rewrite-risk
+proxy. Ranking is prioritisation, not validation.
+
+### 5. Verification (gate 1)
+`modules/verification` compiles the candidate, then executes the original and the
+candidate in isolated subprocesses with the same input and compares stdout and
+exit status. When the comparison produces no usable signal the result is
+**inconclusive**, never "verified".
+
+### 6. Benchmarking (gate 2)
+`modules/benchmarking` copies the project into a temporary workspace, writes the
+candidate over the target file there, and runs warm-up plus N measured
+executions of both versions, reporting mean/min/max energy and the spread
+between runs.
+
+### 7. Decision
+`modules/optimization_decision` applies correctness first. Only a verified
+candidate with a measured improvement larger than the threshold (which rises
+with the observed measurement spread) is `IMPROVED`. Differences inside the
+noise floor are `NEUTRAL`; worse measurements are `REGRESSED`. The developer's
+accept/reject action is appended to `results/decisions.jsonl`.
+
+---
+
+## Research Integrity
+
+- Predicted and measured values are stored in separate fields and displayed with
+  different labels and styling. Nothing converts a prediction into a measurement.
+- Every measurement records energy, duration, CO₂, hardware and tracker metadata
+  so the experiment can be reproduced.
+- Neutral, regressed and failed candidates are kept and displayed alongside
+  successful ones. The decision history is not filtered to wins.
+- Detection results are hypotheses from static pattern matching; they are never
+  presented as proof of energy inefficiency.
+
+---
+
+## Known Limitations
+
+- **Verification is not a container sandbox.** Candidates run in a subprocess with
+  a timeout and UTF-8 pinning, but without OS-level isolation. Only analyse code
+  you are willing to execute on this machine.
+- **Behaviour comparison is limited** to programs that run standalone and produce
+  deterministic stdout. Files needing arguments, stdin or external services yield
+  an inconclusive result unless test cases are supplied.
+- **Benchmarks are single-machine.** Small differences between runs are
+  environmental noise; the decision threshold accounts for this rather than
+  reporting a saving that is not real.
+- **`modules/analysis` (CFG/EFG) is a library** and is not yet connected to the
+  pipeline.

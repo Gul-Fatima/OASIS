@@ -19,7 +19,7 @@ from code_understanding.parser import parse_code
 
 
 def main() -> None:
-    path_input = input("Enter path to a Python file: ").strip()
+    path_input = input("Enter path to a Python file: ").strip() #why py only
     path = Path(path_input)
 
     if not path.exists():

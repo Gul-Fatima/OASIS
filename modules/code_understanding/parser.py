@@ -35,8 +35,15 @@ class _Walker:
     """Stateful traversal of one parsed source file."""
 
     def __init__(self, source: str, path: str, adapter: LanguageAdapter) -> None:
+        from tree_sitter import Parser
         self.adapter = adapter
-        self.root = adapter.parser.parse(source.encode("utf-8")).root_node
+        if adapter.grammar is None:
+            raise ValueError(
+                f"No tree-sitter grammar available for '{adapter.language}'. "
+                f"Install it with: pip install tree-sitter-{adapter.language}"
+            )
+        parser = Parser(adapter.grammar)
+        self.root = parser.parse(source.encode("utf-8")).root_node
         self.state = CodeState(language=adapter.language, path=path)
         self.class_names = _top_level_class_names(self.root, adapter)
         self.complexities = adapter.complexity(source)
