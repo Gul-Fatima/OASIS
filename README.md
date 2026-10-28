@@ -103,18 +103,29 @@ OASIS/
 ├── requirements.txt
 ├── .env.example
 ├── run.sh
+├── okeb.json                     the 160-rule optimization knowledge base
 │
 ├── frontend/                     Next.js application
-│   ├── app/                      routes (App Router)
-│   │   ├── page.tsx              dashboard
-│   │   ├── analyze/              combined analysis
-│   │   ├── energy/               energy measurement
-│   │   ├── detect/               energy smell detection
-│   │   ├── candidates/           optimization pipeline
-│   │   ├── taxonomy/             taxonomy browser
-│   │   ├── history/              decision history
-│   │   └── settings/             configuration
-│   ├── components/               AppShell, Disclosure, ui, per-page views
+│   ├── app/
+│   │   ├── layout.tsx            root <html>/<body> + metadata (dark theme)
+│   │   ├── (public)/             no shell — the light pages
+│   │   │   ├── page.tsx          landing page at "/", own inline header
+│   │   │   └── home/             light project dashboard, no sidebar/footer
+│   │   └── (app)/                shell group: every route below renders in AppShell
+│   │       ├── layout.tsx        mounts <AppShell> (sidebar + mobile header)
+│   │       ├── optimize/         optimize (issues + copyable prompt)
+│   │       ├── analyze/          combined analysis
+│   │       ├── energy/           energy measurement
+│   │       ├── detect/           energy smell detection
+│   │       ├── candidates/       optimization pipeline
+│   │       ├── taxonomy/         taxonomy browser
+│   │       ├── history/          decision history
+│   │       └── settings/         configuration
+│   ├── components/
+│   │   ├── AppShell.tsx          sidebar NAV array, mobile header, health probe
+│   │   ├── Disclosure.tsx        collapsible sections
+│   │   ├── ui.tsx                shared primitives
+│   │   └── analyze/ energy/ detect/ candidates/ optimize/   per-dashboard views
 │   ├── lib/                      api client, types, formatting
 │   └── README.md / claude.md
 │
@@ -129,7 +140,7 @@ OASIS/
 │   │
 │   ├── code_understanding/       parser, adapters, folder scan, CodeState model
 │   ├── energy_estimation/        CodeCarbon estimator, executor, project
-│   ├── energy_detection/         taxonomy, OKEB rule base, matcher, detector, prompts
+│   ├── energy_detection/         taxonomy, OKEB rule base + matcher, detector, opportunities, prompts
 │   ├── candidate_generation/     Gemini client, generator, prompts
 │   ├── candidate_ranking/        ranking weights + scoring
 │   ├── verification/             validator + orchestration service
@@ -163,20 +174,38 @@ OASIS/
 The UI is a Next.js (App Router, TypeScript, Tailwind CSS v4) application in
 `frontend/`. It replaces the earlier static HTML dashboards.
 
-| Route | Purpose |
-|---|---|
-| `/` | **Optimize**: choose a file, review issues + strategies, copy the LLM prompt |
-| `/analyze` | Parse a file or folder, then measure its energy in one run |
-| `/energy` | CodeCarbon measurement, including continuous mode for servers |
-| `/detect` | Static energy smell detection, grouped by taxonomy category |
-| `/candidates` | Full pipeline: generate → rank → verify → benchmark → decide → accept/reject |
-| `/taxonomy` | The 12-category, 65-subcategory energy smell taxonomy |
-| `/history` | Recorded accept/reject decisions |
-| `/settings` | Backend, LLM and language configuration |
+| Route | Purpose | Backend calls |
+|---|---|---|
+| `/` | Public landing page (route group `(public)`, no sidebar) | none |
+| `/home` | Public light project dashboard (group `(public)`, no sidebar) | none (static) |
+| `/optimize` | Optimize: choose a file, review issues + strategies, copy the LLM prompt | `POST /api/optimize` |
+| `/analyze` | Parse a file or folder, then measure its energy in one run | `POST /api/code/analyze/stream`, `POST /api/energy/estimate/stream`, `POST /api/energy/stop` |
+| `/energy` | CodeCarbon measurement, including continuous mode for servers | `POST /api/energy/estimate/stream`, `POST /api/energy/stop` |
+| `/detect` | Static energy smell detection, grouped by taxonomy category | `POST /api/detect` |
+| `/candidates` | Full pipeline: generate → rank → verify → benchmark → decide → accept/reject | `POST /api/pipeline/run/stream`, `POST /api/candidates/decision/record`, `GET /api/llm/status` |
+| `/taxonomy` | The 12-category, 65-subcategory energy smell taxonomy | `GET /api/taxonomy` |
+| `/history` | Recorded accept/reject decisions | `GET /api/candidates/history` |
+| `/settings` | Backend, LLM and language configuration | `GET /api/llm/status`, `GET /api/llm/models`, `GET /api/languages` |
 
-The sidebar deliberately exposes only `/` (Optimize), `/history` and
-`/settings`; the remaining routes are deeper tooling, reachable by URL rather
-than part of the day-to-day flow.
+Every route under `(app)/` polls `GET /api/health` through `AppShell`, which is
+where the "backend offline" banner comes from. The rule-base endpoints
+(`/api/rules*`) are developer tooling and no page calls them yet.
+
+The sidebar is the `NAV` array at the top of
+`frontend/components/AppShell.tsx`; add or reorder entries there. Two groups of
+routes exist, and they do not share a background:
+
+- **`(app)/`** — dark shell (`bg-canvas` `#080c11` from `globals.css`).
+  `/optimize`, `/analyze`, `/energy`, `/detect`, `/candidates`, `/taxonomy`,
+  `/history`, `/settings` all render here.
+- **`(public)/`** — bare layout, no sidebar, no footer. `/` (landing) and
+  `/home` (light `#F7F7FC` dashboard) live here.
+
+Because `/home` is in the public group, the sidebar's *Dashboard* link leaves the
+shell — it is a full-page boundary, not an in-shell page. Any page added under
+`(app)/` must use the shell's tokens (`bg-surface`, `text-ink`, `border-line`,
+`text-muted`); hard-coded light colours there will only paint part of the page
+and leave the dark canvas visible around it.
 
 **Layout rule:** every dashboard is summary-first — headline metric cards at the
 top, detailed tables and raw payloads inside collapsed disclosures (native
@@ -191,10 +220,14 @@ figures.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/` | API status (or the legacy dashboard if present) |
+| `GET` | `/analysis` | Slot for the legacy `analysis.html`; serves the UI hint, since the Next.js app replaced that page |
 | `GET` | `/api/health` | Health check |
 | `POST` | `/api/optimize` | Analyse a file (`file_path` or uploaded `source`) and return issues + a copyable LLM prompt |
 | `GET` | `/api/languages` | Supported languages and file extensions |
 | `GET` | `/api/taxonomy` | Full energy smell taxonomy |
+| `GET` | `/api/rules` | The 160-rule knowledge base, annotated with which rules have a runnable matcher |
+| `GET` | `/api/rules/selftest` | Per-rule positive/negative matcher regression bench |
+| `POST` | `/api/rules/test` | Match pasted Python source against the implemented structural rules |
 | `POST` | `/api/detect` | Detect energy smells in a single file |
 | `POST` | `/api/code/analyze` | Parse a file into `CodeState` |
 | `POST` | `/api/code/analyze/folder` | Parse every supported file under a folder (aggregated) |
@@ -213,12 +246,53 @@ figures.
 | `GET` | `/api/candidates/history` | Recent optimization decisions |
 | `POST` | `/api/pipeline/run/stream` | Whole pipeline as SSE progress events |
 
+### Request bodies
+
+All bodies are JSON. Optional fields are shown with their default.
+
+| Endpoint | Fields |
+|---|---|
+| `/api/optimize` | `source` (pasted text) **or** `file_path`; optional `filename` |
+| `/api/detect` | `file_path`; `language` (`auto`) |
+| `/api/code/analyze` | `file_path`; `language` (`auto`) |
+| `/api/code/analyze/folder` · `/stream` | `project_path`; `language` (`auto`); `recursive` (`true`); `max_files` (`500`, max 5000) |
+| `/api/energy/estimate` | `project_path`; `command`; `timeout` (`300`); `interval_seconds` (`10`). Rejects `continuous: true` with a 400 — use the stream endpoint |
+| `/api/energy/estimate/stream` | The same, plus `continuous: true` for servers and other long-running processes |
+| `/api/energy/stop` | No body; 409 when nothing is running |
+| `/api/candidates/generate` | `file_path`; `language` (`auto`); optional `detections[]`; `num_candidates` (`1`, max 5); `run_detection` (`true`) |
+| `/api/candidates/rank` | `candidates[]`; `original_code`; `detection_count`; optional `weights{}` |
+| `/api/candidates/verify` | `candidate_code`; `file_path` **or** (`original_code` + `language`); optional `test_inputs[]` / `test_outputs[]`; `timeout` (`20.0`s) |
+| `/api/candidates/benchmark` | `candidate_code`; `command`; `file_path`; optional `project_path`; `runs` (`2`, max 10); `warmup_runs` (`1`, max 5); `timeout` (`300`) |
+| `/api/candidates/decision` | `candidate{}`; optional `verification{}` / `benchmark{}`; `min_improvement_percent` (`5.0`) |
+| `/api/candidates/decision/record` | `candidate_id`; `status`; `developer_action`; optional `rationale[]`, `measured_improvement_percent` |
+| `/api/pipeline/run/stream` | `file_path`; `language` (`auto`); `command`; optional `project_path`; `num_candidates` (`1`, max 5); `runs` (`1`, max 10); `warmup_runs` (`1`, max 5); `timeout` (`300`); `min_improvement_percent` (`5.0`); `skip_benchmark` (`false`) |
+| `/api/rules/test` | `source`; optional `path` |
+
+`GET /api/candidates/history` takes `limit` (default 50, max 500). Response
+shapes are mirrored field for field in `frontend/lib/types.ts`, which is the
+contract the UI compiles against.
+
+Status codes: 400 bad input, 404 missing file or project, 409 candidate
+generation is not configured, 502 the LLM provider failed.
+
+### Streaming (SSE)
+
+| Endpoint | Events |
+|---|---|
+| `/api/code/analyze/stream` | `{"type":"progress","stage","percent","current","total","file"}` · `{"type":"result","result":{…}}` · `{"type":"error","message"}` |
+| `/api/energy/estimate/stream` | One CodeCarbon metrics snapshot per event, `{"final":true}` on the last; heartbeat snapshots with `execution_status:"measuring"` while a finite process runs; `{"error":…,"final":true}` on failure |
+| `/api/pipeline/run/stream` | `{"type":"progress","stage","percent","message"}` · `{"type":"partial","stage","payload"}` per finished stage · `{"type":"result","result":{…}}` · `{"type":"error","message"}` |
+
+These are POST endpoints, so `EventSource` cannot be used: `frontend/lib/api.ts#streamPost`
+reads the body with a streaming reader and parses the `data:` frames itself.
+
 ---
 
 ## Prerequisites
 
 - **Python 3.10+** (developed on Python 3.14)
-- **Node.js 18+** and npm (developed on Node 24) — for the frontend only
+- **Node.js 20.9+** and npm (developed on Node 24) — for the frontend only.
+  Next.js 16 rejects Node 18 and older.
 
 ---
 
@@ -272,7 +346,8 @@ npm run dev
 | API | http://localhost:8000 |
 | Interactive API docs | http://localhost:8000/docs |
 
-`./run.sh` starts the backend and opens the API docs.
+`./run.sh` starts the backend and, when `frontend/node_modules` exists, the
+Next.js UI as well, then opens the UI (or the API docs when the UI is skipped).
 
 The UI is one workflow: **Optimize** (http://localhost:3000) — choose a Python
 file, review the issues with their taxonomy label and knowledge-base strategy,
@@ -367,10 +442,12 @@ Environment variables are read from `OASIS/.env` (see `.env.example`).
 | Variable | Default | Purpose |
 |---|---|---|
 | `GEMINI_API_KEY` | — | Required for candidate generation |
+| `GOOGLE_API_KEY` | — | Alternative name for the same key; either one enables generation |
 | `GEMINI_MODEL` | `gemini-3.8-flash` | Model used for generation |
 | `GEMINI_API_BASE` | Google Generative Language API | Override for a proxy/gateway |
 | `GEMINI_TIMEOUT_SECONDS` | `120` | Per-request timeout |
 | `GEMINI_MAX_OUTPUT_TOKENS` | `8192` | Output cap (truncation is reported as an error) |
+| `CODECARBON_API_KEY` | — | Optional Electricity Maps key so CodeCarbon resolves region-aware carbon intensity |
 | `NEXT_PUBLIC_API_BASE_URL` | `http://127.0.0.1:8000` | Frontend → backend base URL (in `frontend/.env.local`) |
 
 ---
@@ -381,6 +458,11 @@ Environment variables are read from `OASIS/.env` (see `.env.example`).
 `modules/code_understanding` parses source with tree-sitter into a `CodeState`
 (functions, classes, loops, conditionals, calls, I/O operations, dependencies,
 complexity). This representation makes **no energy claims**.
+
+A syntax error does not abort the analysis: the file is still walked on
+tree-sitter's recovered tree and the first error is returned as
+`state.syntax_error`, so the UI should show it as a warning next to a result
+rather than treat the request as failed.
 
 ### 2. Energy smell detection
 
@@ -395,6 +477,11 @@ There are two detectors, sharing one taxonomy:
   strategy text from `okeb.json` (`rulebase.py` indexes it). It is Python-only
   and covers 8 of the 160 knowledge-base rules so far; it is not yet wired into
   `/api/detect`.
+
+`POST /api/optimize` merges the two: structural matches first, then the pattern
+detections not already reported at the same subcategory and line, sorted by
+line. Every issue carries `origin: "structural" | "pattern"` so the UI can say
+which detector produced it.
 
 `okeb.json` is aligned one-way onto `modules/energy_detection/taxonomy.py`, which
 mirrors `third_party/energy-smells/taxonomy.md` (12 categories, 65
@@ -465,3 +552,9 @@ accept/reject action is appended to `results/decisions.jsonl`.
   reporting a saving that is not real.
 - **`modules/analysis` (CFG/EFG) is a library** and is not yet connected to the
   pipeline.
+
+
+Verified (not just edited): rule base is 160 rules with 8 matcher-implemented, taxonomy is 12 categories / 65 subcategories,  okeb.json  validation is clean, and  python -m pytest modules/energy_detection -q  → 23 passed, so the README's "matcher is enforced by pytest" claim holds. CLI entry points named in the README all have  __main__  blocks. Every endpoint, request model and frontend call site was checked against the code; nothing failed or was left unverifiable. I did not change any application code.
+
+One gap the README now exposes: it tells the UI to surface  syntax_error  as a warning, but  frontend/lib/types.ts  doesn't include that field yet, so the parse view can't display it.#   O A S I S  
+ 
