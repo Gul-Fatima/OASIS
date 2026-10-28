@@ -87,6 +87,50 @@ function Icon({ path }: { path: string }) {
   );
 }
 
+/**
+ * The one theme control, rendered twice: a labelled row in the sidebar and a
+ * compact icon button in the small-screen header. Both drive the same state,
+ * so there is no second theme implementation to keep in sync.
+ */
+function ThemeButton({
+  theme,
+  onToggle,
+  compact = false,
+}: {
+  theme: Theme;
+  onToggle: () => void;
+  compact?: boolean;
+}) {
+  const label = `Switch to ${theme === "dark" ? "light" : "dark"} theme`;
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={label}
+        title={label}
+        className="rounded-lg border border-line bg-surface-2 p-2 text-ink transition hover:border-accent/50 hover:text-accent"
+      >
+        <Icon path={theme === "dark" ? SUN : MOON} />
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={label}
+      title={label}
+      className="mb-2.5 flex w-full items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-[11px] text-ink transition hover:border-accent/50 hover:text-accent"
+    >
+      <Icon path={theme === "dark" ? SUN : MOON} />
+      <span>{theme === "dark" ? "Light theme" : "Dark theme"}</span>
+    </button>
+  );
+}
+
 type Health = "checking" | "online" | "offline";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -197,16 +241,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="border-t border-line px-4 py-3">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-            className="mb-2.5 flex w-full items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-[11px] text-ink transition hover:border-accent/50 hover:text-accent"
-          >
-            <Icon path={theme === "dark" ? SUN : MOON} />
-            <span>{theme === "dark" ? "Light theme" : "Dark theme"}</span>
-          </button>
+          <ThemeButton theme={theme} onToggle={toggleTheme} />
 
           <div className="flex items-center gap-2">
             <span className={`h-2 w-2 rounded-full ${statusDot}`} />
@@ -238,6 +273,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             ☰ Menu
           </button>
           <span className="text-sm font-semibold">OASIS</span>
+          <div className="ml-auto">
+            <ThemeButton theme={theme} onToggle={toggleTheme} compact />
+          </div>
         </div>
 
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">

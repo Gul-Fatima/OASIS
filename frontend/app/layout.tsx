@@ -24,7 +24,11 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // The inline script above sets data-theme before React hydrates, so the
+    // server HTML and the client tree differ by exactly that attribute.
+    // suppressHydrationWarning is scoped to <html> and only silences that
+    // known difference; children are still checked normally.
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-canvas text-ink antialiased">
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         {children}

@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 
 type IconName =
@@ -76,11 +75,11 @@ const projects = [
 
 export default function HomeDashboard() {
   return (
-    <div className="min-h-screen bg-[#F7F7FC] text-[#20252C]">
-      <div className="mx-auto max-w-[1440px] space-y-7 px-5 py-8 sm:px-8 lg:px-10">
+    <div className="text-ink">
+      <div className="mx-auto max-w-[1440px] space-y-7">
         {/* Welcome */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2 text-xs font-medium text-[#28754F]">
+          <div className="flex items-center gap-2 text-xs font-medium text-accent">
             <Icon name="leaf" size={15} />
             <span>ENERGY-AWARE CODE OPTIMIZATION</span>
           </div>
@@ -89,7 +88,7 @@ export default function HomeDashboard() {
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               Good evening
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#737786] sm:text-base">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">
               Analyze your code, explore improvements, and validate their
               impact with evidence.
             </p>
@@ -98,7 +97,7 @@ export default function HomeDashboard() {
           <div className="flex flex-wrap gap-3 pt-1">
             <Link
               href="/analyze"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#176B48] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#12583B]"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-canvas transition hover:bg-accent/90"
             >
               <Icon name="folder" size={16} />
               Open analysis
@@ -107,7 +106,7 @@ export default function HomeDashboard() {
 
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-[#DDDCE8] bg-white px-4 py-2.5 text-sm font-medium text-[#343746] transition hover:bg-[#F1F0F8]"
+              className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-surface-2"
             >
               <Icon name="file" size={16} />
               Optimize code
@@ -120,13 +119,13 @@ export default function HomeDashboard() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold">Your projects</h2>
-              <p className="mt-1 text-sm text-[#737786]">
+              <p className="mt-1 text-sm text-muted">
                 Continue working on your code.
               </p>
             </div>
             <Link
               href="/analyze"
-              className="text-sm font-medium text-[#176B48] hover:underline"
+              className="text-sm font-medium text-accent hover:underline"
             >
               View analysis
             </Link>
@@ -137,10 +136,10 @@ export default function HomeDashboard() {
               <Link
                 key={project.name}
                 href={project.href}
-                className="group rounded-xl border border-[#E8E7F0] bg-white p-5 transition hover:border-[#B7D5C3] hover:shadow-sm"
+                className="group rounded-xl border border-line bg-surface p-5 transition hover:border-accent/60 hover:shadow-sm"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EAF4ED] text-[#28754F]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent">
                     <Icon name={project.icon} size={20} />
                   </div>
 
@@ -148,7 +147,7 @@ export default function HomeDashboard() {
                     <h3 className="truncate text-sm font-semibold">
                       {project.name}
                     </h3>
-                    <p className="mt-1 text-xs text-[#737786]">
+                    <p className="mt-1 text-xs text-muted">
                       {project.description}
                     </p>
 
@@ -156,14 +155,14 @@ export default function HomeDashboard() {
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs ${
                           project.statusColor === "green"
-                            ? "bg-[#EAF4ED] text-[#28754F]"
-                            : "bg-[#F0EFFB] text-[#7068B5]"
+                            ? "bg-accent-soft text-accent"
+                            : "bg-surface-3 text-violet"
                         }`}
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-current" />
                         {project.status}
                       </span>
-                      <span className="text-xs text-[#176B48] group-hover:underline">
+                      <span className="text-xs text-accent group-hover:underline">
                         Open <span aria-hidden="true">→</span>
                       </span>
                     </div>
@@ -175,54 +174,54 @@ export default function HomeDashboard() {
         </section>
 
         {/* Recent activity */}
-        <section className="rounded-xl border border-[#E8E7F0] bg-white">
-          <div className="flex items-center justify-between border-b border-[#F0EFF5] px-5 py-4">
+        <section className="rounded-xl border border-line bg-surface">
+          <div className="flex items-center justify-between border-b border-line px-5 py-4">
             <div>
               <h2 className="text-base font-semibold">Recent activity</h2>
-              <p className="mt-1 text-xs text-[#737786]">
+              <p className="mt-1 text-xs text-muted">
                 Pick up where you left off.
               </p>
             </div>
             <Link
               href="/history"
-              className="text-sm font-medium text-[#176B48] hover:underline"
+              className="text-sm font-medium text-accent hover:underline"
             >
               Run history
             </Link>
           </div>
 
-          <div className="divide-y divide-[#F0EFF5]">
+          <div className="divide-y divide-line">
             <div className="flex items-center gap-3 px-5 py-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EAF4ED] text-[#28754F]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-accent">
                 <Icon name="check" size={18} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">Code analysis</p>
-                <p className="mt-1 text-xs text-[#737786]">
+                <p className="mt-1 text-xs text-muted">
                   Review findings and potential optimization opportunities.
                 </p>
               </div>
               <Link
                 href="/detect"
-                className="hidden text-xs font-medium text-[#176B48] hover:underline sm:block"
+                className="hidden text-xs font-medium text-accent hover:underline sm:block"
               >
                 View findings
               </Link>
             </div>
 
             <div className="flex items-center gap-3 px-5 py-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F0EFFB] text-[#7068B5]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-3 text-violet">
                 <Icon name="clock" size={18} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">Optimization workflow</p>
-                <p className="mt-1 text-xs text-[#737786]">
+                <p className="mt-1 text-xs text-muted">
                   Review candidates, verification, and benchmark results.
                 </p>
               </div>
               <Link
                 href="/candidates"
-                className="hidden text-xs font-medium text-[#176B48] hover:underline sm:block"
+                className="hidden text-xs font-medium text-accent hover:underline sm:block"
               >
                 Open workflow
               </Link>
@@ -231,7 +230,7 @@ export default function HomeDashboard() {
         </section>
 
         {/* Small footer note */}
-        <p className="text-xs text-[#858696]">
+        <p className="text-xs text-muted">
           OASIS · Evidence-based software energy optimization
         </p>
       </div>

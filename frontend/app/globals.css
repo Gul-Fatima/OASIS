@@ -117,7 +117,9 @@
   --color-accent-soft: #dcf2e7;
   --color-info: #0b6c9c;
   --color-info-soft: #dbedf9;
-  --color-warn: #9a6200;
+  /* #9a6200 measured 4.43:1 on warn-soft; this keeps every warning label
+     above the 4.5:1 text minimum. */
+  --color-warn: #8f5b00;
   --color-warn-soft: #fbeed2;
   --color-danger: #c02b3d;
   --color-danger-soft: #fbe0e3;
