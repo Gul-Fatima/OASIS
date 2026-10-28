@@ -25,8 +25,10 @@ _LOOP_KINDS = {"for_statement": "for", "while_statement": "while"}
 def parse_code(source: str, path: str = "<unknown>", language: str = "python") -> CodeState:
     """Parse ``source`` into a CodeState.
 
-    Raises ValueError with location details on syntax errors, or for an
-    unsupported ``language``.
+    Syntax errors do not abort the analysis: tree-sitter recovers into a
+    partial tree, which is walked as usual, and the first error is recorded
+    on ``state.syntax_error``. Raises ValueError only for an unsupported
+    ``language``.
     """
     return _Walker(source, path, get_adapter(language)).parse()
 
@@ -50,9 +52,14 @@ class _Walker:
         self.decorators: dict[tuple, list[str]] = {}
 
     def parse(self) -> CodeState:
-        """Walk the tree, filling and returning ``state``."""
+        """Walk the tree, filling and returning ``state``.
+
+        A file with a syntax error is still analysed on its recovered tree;
+        the error itself is reported as data (``state.syntax_error``) rather
+        than as a failure, so one broken line cannot stop the analysis.
+        """
         if self.root.has_error:
-            raise ValueError(_syntax_error_message(self.root, self.state.path))
+            self.state.syntax_error = _syntax_error_message(self.root, self.state.path)
         for node in self.root.named_children:
             self._visit(node)
         self.state.complexity = _complexity_summary(self.state.functions)

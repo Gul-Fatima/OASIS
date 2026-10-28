@@ -12,7 +12,11 @@ pydantic>=2
 httpx>=0.27
 
 # --- Code parsing ---------------------------------------------
-tree-sitter>=0.22
+# Capped below 0.26: the 0.26 runtime crashes with an access violation
+# when walking trees from the tree-sitter-python 0.25 grammar (random
+# segfaults mid-scan on Windows, which kills the API worker), while
+# 0.25.x is stable.
+tree-sitter>=0.22,<0.26
 tree-sitter-python>=0.21
 
 # --- Energy measurement ---------------------------------------

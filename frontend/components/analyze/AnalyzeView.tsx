@@ -1,11 +1,10 @@
+
 "use client";
 
 /**
- * Combined analysis: code understanding + energy measurement in one workflow.
- *
- * Layout rule for this page: the top shows a summary only — the same style of
- * headline cards as the energy dashboard. Every detailed table lives inside a
- * collapsed Disclosure so the page never opens on a wall of raw metrics.
+ * OASIS combined analysis.
+ * Simplified configuration, results-first summary, and expandable details.
+ * Existing backend endpoints and payload contracts are preserved.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -44,6 +43,8 @@ import type { EnergySnapshot, FolderAnalysisResult } from "@/lib/types";
 
 type Phase = "idle" | "parsing" | "measuring" | "done" | "error";
 
+type StepState = "Not started" | "In progress" | "Completed" | "Skipped";
+
 const LANGUAGES = [
   { value: "auto", label: "Auto-detect" },
   { value: "python", label: "Python" },
@@ -65,6 +66,7 @@ export function AnalyzeView() {
   const [command, setCommand] = useState("");
   const [timeout, setTimeoutSeconds] = useState(300);
   const [continuous, setContinuous] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [percent, setPercent] = useState(0);
@@ -82,15 +84,19 @@ export function AnalyzeView() {
   const logRef = useRef<HTMLDivElement | null>(null);
 
   const running = phase === "parsing" || phase === "measuring";
+  const hasResult = structure !== null;
+  const energySkipped = phase === "done" && !command.trim() && hasResult;
 
-  // Elapsed timer, only while a run is active.
   useEffect(() => {
     if (!running) return;
-    const timer = window.setInterval(() => setElapsed((value) => value + 1), 1000);
+
+    const timer = window.setInterval(() => {
+      setElapsed((value) => value + 1);
+    }, 1000);
+
     return () => window.clearInterval(timer);
   }, [running]);
 
-  // Keep the log pinned to the newest line.
   useEffect(() => {
     const node = logRef.current;
     if (node) node.scrollTop = node.scrollHeight;
@@ -98,6 +104,7 @@ export function AnalyzeView() {
 
   function appendLog(message: string) {
     if (!message) return;
+
     setLog((previous) => {
       const next = [...previous, message];
       return next.length > 300 ? next.slice(-300) : next;
@@ -121,6 +128,8 @@ export function AnalyzeView() {
       return;
     }
 
+    if (running) return;
+
     reset();
     setPhase("parsing");
     setStatusText("Parsing code…");
@@ -129,10 +138,11 @@ export function AnalyzeView() {
     abortRef.current = controller;
 
     try {
-      // ---------------- STEP 1: STATIC ANALYSIS ----------------
-      // Held in an object because the value is produced inside a stream callback.
-      const collected: { result: FolderAnalysisResult | null } = { result: null };
+      const collected: { result: FolderAnalysisResult | null } = {
+        result: null,
+      };
 
+      // STEP 1: STATIC ANALYSIS
       await streamPost(
         "/api/code/analyze/stream",
         {
@@ -144,7 +154,11 @@ export function AnalyzeView() {
         (event: StreamEvent) => {
           if (event.type === "progress") {
             const stagePercent = Number(event.percent ?? 0);
-            setPercent(Math.max(0, Math.min(50, stagePercent * 0.5)));
+
+            setPercent(
+              Math.max(0, Math.min(50, stagePercent * 0.5)),
+            );
+
             appendLog(
               `${event.message ?? event.stage ?? "progress"}${
                 event.file ? ` — ${event.file}` : ""
@@ -160,30 +174,43 @@ export function AnalyzeView() {
       );
 
       const parsed = collected.result;
+
       if (!parsed) {
         throw new Error("The backend returned no analysis result.");
       }
 
       setStructure(parsed);
       setPercent(50);
+
       appendLog(
         `Parsed ${parsed.analyzed_files ?? 0} file(s)` +
           (parsed.failed_files ? `, ${parsed.failed_files} failed` : ""),
       );
 
-      if (parsed.notes?.length) setWarnings(parsed.notes);
+      if (parsed.notes?.length) {
+        setWarnings(parsed.notes);
+      }
 
-      // ---------------- STEP 2: ENERGY MEASUREMENT ----------------
+      // STEP 2: ENERGY MEASUREMENT
       if (!command.trim()) {
         setPercent(100);
         setPhase("done");
-        setStatusText("Static analysis complete — no command given, so no energy was measured");
-        appendLog("No execution command supplied: skipped energy measurement.");
+        setStatusText(
+          "Static analysis complete — energy measurement skipped because no command was supplied.",
+        );
+        appendLog(
+          "No execution command supplied: skipped energy measurement.",
+        );
         return;
       }
 
       setPhase("measuring");
-      setStatusText(continuous ? "Monitoring running project…" : "Executing and measuring…");
+      setStatusText(
+        continuous
+          ? "Monitoring running project…"
+          : "Executing and measuring…",
+      );
+
       appendLog(`Running: ${command.trim()}`);
 
       await streamPost(
@@ -202,13 +229,22 @@ export function AnalyzeView() {
             throw new Error(String(snapshot.error));
           }
 
-          if (snapshot.execution_status === "measuring" && !snapshot.final) {
-            setPercent((value) => Math.min(96, Math.max(value, 52) + 2));
+          if (
+            snapshot.execution_status === "measuring" &&
+            !snapshot.final
+          ) {
+            setPercent((value) =>
+              Math.min(96, Math.max(value, 52) + 2),
+            );
+
             if (snapshot.execution_time_seconds) {
               setStatusText(
-                `Measuring… ${formatDuration(snapshot.execution_time_seconds)} elapsed`,
+                `Measuring… ${formatDuration(
+                  snapshot.execution_time_seconds,
+                )} elapsed`,
               );
             }
+
             return;
           }
 
@@ -217,14 +253,17 @@ export function AnalyzeView() {
           if (snapshot.final) {
             setEnergy(snapshot);
             setPercent(100);
+
             appendLog(
               `Measured: ${formatEnergy(snapshot.energy_consumed)} · ` +
-                `${formatCo2(snapshot.emissions)} · ${formatDuration(
-                  snapshot.execution_time_seconds,
-                )}`,
+                `${formatCo2(snapshot.emissions)} · ` +
+                `${formatDuration(snapshot.execution_time_seconds)}`,
             );
           } else {
-            setPercent((value) => Math.min(94, Math.max(value, 55) + 4));
+            setPercent((value) =>
+              Math.min(94, Math.max(value, 55) + 4),
+            );
+
             appendLog(
               `Snapshot #${snapshot.snapshot_index ?? "?"}: ` +
                 `${formatEnergy(snapshot.energy_consumed)}`,
@@ -243,7 +282,10 @@ export function AnalyzeView() {
         appendLog("Run stopped by user.");
         return;
       }
-      const message = caught instanceof Error ? caught.message : String(caught);
+
+      const message =
+        caught instanceof Error ? caught.message : String(caught);
+
       setError(message);
       setPhase("error");
       setStatusText("Analysis failed");
@@ -259,7 +301,9 @@ export function AnalyzeView() {
       appendLog("Stop requested — waiting for final metrics…");
     } catch (caught) {
       appendLog(
-        `Stop failed: ${caught instanceof Error ? caught.message : String(caught)}`,
+        `Stop failed: ${
+          caught instanceof Error ? caught.message : String(caught)
+        }`,
       );
     }
   }
@@ -267,6 +311,7 @@ export function AnalyzeView() {
   const summary = useMemo(() => {
     const complexity = structure?.complexity ?? {};
     const languages = structure?.languages ?? {};
+
     return {
       files: structure?.analyzed_files ?? 0,
       failed: structure?.failed_files ?? 0,
@@ -287,41 +332,64 @@ export function AnalyzeView() {
     };
   }, [structure]);
 
-  const hasResult = structure !== null;
+  function getStepState(key: string): StepState {
+    if (key === "parsing") {
+      if (structure) return "Completed";
+      if (phase === "parsing") return "In progress";
+      return "Not started";
+    }
+
+    if (key === "measuring") {
+      if (energySkipped) return "Skipped";
+      if (energy) return "Completed";
+      if (phase === "measuring") return "In progress";
+      if (phase === "error" && structure) return "Not started";
+      return "Not started";
+    }
+
+    if (key === "done") {
+      if (phase === "done") return "Completed";
+      if (phase === "error") return "Not started";
+      return "Not started";
+    }
+
+    return "Not started";
+  }
 
   return (
     <>
       <PageHeader
-        overline="Code understanding + CodeCarbon"
-        title="Combined Analysis"
-        description="Point at a file or a whole project. OASIS parses the code into a structured representation, then optionally executes it to measure real energy consumption."
+        overline="Code analysis + energy measurement"
+        title="Analyze code"
+        description="Explore code structure and, optionally, measure energy consumption during execution."
       />
 
-      <div className="mb-5">
-        <Alert tone="info" title="Static analysis and measurement are separate claims">
-          Parsing tells you what the code looks like. Only the second step produces
-          measured energy. If you leave the execution command empty, no energy value
-          is produced or implied.
-        </Alert>
-      </div>
+      <p className="mb-5 text-sm text-muted">
+        Static analysis describes your code. Energy results are available only
+        when an execution command is supplied and measurement returns results.
+      </p>
 
-      {/* ================= INPUT ================= */}
+      {/* CONFIGURATION */}
       <Card className="mb-5">
-        <SectionHeader overline="New analysis" title="Analyze a file or a folder" />
+        <SectionHeader
+          overline="Configuration"
+          title="Choose what to analyze"
+          description="Enter a file or folder path to begin."
+        />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="lg:col-span-2">
             <Field
               label="File / folder path"
               htmlFor="targetPath"
-              hint="A file analyzes just that file. A folder is scanned recursively; dependency and build folders are skipped."
+              hint="Folders are scanned recursively. Dependency and build folders are skipped."
             >
               <input
                 id="targetPath"
                 className={inputClass}
                 value={targetPath}
                 onChange={(event) => setTargetPath(event.target.value)}
-                placeholder="D:/projects/my_project   or   D:/projects/my_project/main.py"
+                placeholder="D:/projects/my_project"
                 disabled={running}
               />
             </Field>
@@ -342,57 +410,76 @@ export function AnalyzeView() {
               ))}
             </select>
           </Field>
+        </div>
 
-          <Field
-            label="Execution command"
-            htmlFor="command"
-            hint="Leave empty to run static analysis only."
+        <div className="mt-4">
+          <Disclosure
+            title="Advanced options"
+            overline="Optional settings"
+            summary={
+              command.trim()
+                ? "Execution command configured"
+                : "Static analysis only unless a command is supplied"
+            }
           >
-            <input
-              id="command"
-              className={inputClass}
-              value={command}
-              onChange={(event) => setCommand(event.target.value)}
-              placeholder="python main.py"
-              disabled={running}
-            />
-          </Field>
+            <div className="grid grid-cols-1 gap-4 pt-3 lg:grid-cols-2">
+              <div className="lg:col-span-2">
+                <Field
+                  label="Execution command"
+                  htmlFor="command"
+                  hint="Optional. Required to measure energy consumption."
+                >
+                  <input
+                    id="command"
+                    className={inputClass}
+                    value={command}
+                    onChange={(event) => setCommand(event.target.value)}
+                    placeholder="python main.py"
+                    disabled={running}
+                  />
+                </Field>
+              </div>
 
-          <Field
-            label="Timeout"
-            htmlFor="timeout"
-            hint="In continuous mode this is how long the running process is monitored."
-          >
-            <input
-              id="timeout"
-              type="number"
-              min={10}
-              className={inputClass}
-              value={timeout}
-              onChange={(event) => setTimeoutSeconds(Number(event.target.value))}
-              disabled={running}
-            />
-          </Field>
+              <Field
+                label="Timeout"
+                htmlFor="timeout"
+                hint="In seconds. In continuous mode, this limits monitoring duration."
+              >
+                <input
+                  id="timeout"
+                  type="number"
+                  min={10}
+                  className={inputClass}
+                  value={timeout}
+                  onChange={(event) =>
+                    setTimeoutSeconds(Number(event.target.value))
+                  }
+                  disabled={running}
+                />
+              </Field>
 
-          <div className="flex items-end">
-            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink">
-              <input
-                type="checkbox"
-                className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
-                checked={continuous}
-                onChange={(event) => setContinuous(event.target.checked)}
-                disabled={running}
-              />
-              <span>
-                Continuous mode
-                <span className="mt-0.5 block text-xs text-muted">
-                  For projects that never exit, e.g.{" "}
-                  <code>php -S localhost:8000</code> or a Flask server. Metrics
-                  stream in every 10 seconds until you press Stop.
-                </span>
-              </span>
-            </label>
-          </div>
+              <div className="flex items-start pt-1 lg:pt-7">
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+                    checked={continuous}
+                    onChange={(event) =>
+                      setContinuous(event.target.checked)
+                    }
+                    disabled={running}
+                  />
+                  <span>
+                    <span className="font-medium">Continuous mode</span>
+                    <span className="mt-1 block text-xs text-muted">
+                      For long-running processes such as web servers. Metrics
+                      stream every 10 seconds until stopped or timed out.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </Disclosure>
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -404,6 +491,7 @@ export function AnalyzeView() {
           >
             ⚡ Run analysis
           </button>
+
           <button
             type="button"
             className={buttonDanger}
@@ -417,7 +505,10 @@ export function AnalyzeView() {
           >
             ■ Stop
           </button>
-          {running ? <Spinner label={statusText} /> : (
+
+          {running ? (
+            <Spinner label={statusText} />
+          ) : (
             <span className="text-xs text-muted">{statusText}</span>
           )}
         </div>
@@ -431,14 +522,17 @@ export function AnalyzeView() {
         </div>
       ) : null}
 
-      {/* ================= PROGRESS ================= */}
+      {/* PROGRESS */}
       {running || (hasResult && phase !== "idle") ? (
         <Card className="mb-5">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="overline mb-1">Progress</p>
-              <p className="text-sm font-semibold text-ink">{statusText}</p>
+              <p className="overline mb-1">Run status</p>
+              <p className="text-sm font-semibold text-ink">
+                {statusText}
+              </p>
             </div>
+
             <div className="flex items-center gap-4">
               <span className="text-lg font-semibold text-accent">
                 {Math.round(percent)}%
@@ -453,18 +547,22 @@ export function AnalyzeView() {
 
           <div className="mt-3 flex flex-wrap gap-2">
             {STEPS.map((step) => {
-              const active = step.key === phase;
-              const done =
-                (step.key === "parsing" && percent >= 50) ||
-                (step.key === "measuring" && percent >= 100) ||
-                (step.key === "done" && phase === "done");
+              const state = getStepState(step.key);
+              const tone =
+                state === "In progress"
+                  ? "info"
+                  : state === "Completed"
+                    ? "accent"
+                    : "muted";
+
+              const label =
+                state === "Skipped"
+                  ? "2 · Energy skipped"
+                  : step.label;
 
               return (
-                <Badge
-                  key={step.key}
-                  tone={active ? "info" : done ? "accent" : "muted"}
-                >
-                  {step.label}
+                <Badge key={step.key} tone={tone}>
+                  {label} · {state}
                 </Badge>
               );
             })}
@@ -476,7 +574,9 @@ export function AnalyzeView() {
               className="mt-4 max-h-40 overflow-y-auto rounded-lg border border-line bg-canvas p-3 font-mono text-[11px] leading-relaxed text-muted"
             >
               {log.map((line, index) => (
-                <div key={`${index}-${line.slice(0, 12)}`}>{line}</div>
+                <div key={`${index}-${line.slice(0, 12)}`}>
+                  {line}
+                </div>
               ))}
             </div>
           ) : null}
@@ -486,20 +586,22 @@ export function AnalyzeView() {
       {!hasResult && !running ? (
         <EmptyState
           icon="🔍"
-          title="No analysis yet"
-          message="Enter a path and run the analysis. The summary appears here first; the detailed tables stay collapsed underneath."
+          title="Ready to analyze"
+          message="Enter a file or folder path and run the analysis. Your summary will appear here, with detailed results available below it."
         />
       ) : null}
 
-      {/* ================= SUMMARY ================= */}
+      {/* SUMMARY */}
       {hasResult ? (
         <>
           <section className="mb-5">
             <SectionHeader
               overline="Summary"
-              title="What was found"
+              title="Code overview"
               actions={
-                <Badge tone="info">{(structure?.language ?? "mixed").toUpperCase()}</Badge>
+                <Badge tone="info">
+                  {(structure?.language ?? "mixed").toUpperCase()}
+                </Badge>
               }
             />
 
@@ -512,54 +614,56 @@ export function AnalyzeView() {
                 hint={
                   summary.failed > 0
                     ? `${summary.failed} file(s) failed to parse`
-                    : `${structure?.total_files_found ?? summary.files} found in total`
+                    : `${structure?.total_files_found ?? summary.files} files found`
                 }
               />
+
               <MetricCard
                 label="Lines of code"
                 value={formatInteger(summary.lines)}
                 hint={`${summary.languageCount} language(s) detected`}
               />
+
               <MetricCard
                 label="Functions"
                 value={formatInteger(summary.functions)}
                 hint={`${summary.classes} class(es)`}
               />
-              <MetricCard
-                label="Loops"
-                value={formatInteger(summary.loops)}
-                hint={`${summary.conditionals} conditional branch(es)`}
-              />
+
               <MetricCard
                 label="Max complexity"
                 value={summary.maxComplexity ?? "—"}
-                tone={summary.maxComplexity && summary.maxComplexity > 10 ? "warn" : "ink"}
-                hint="Highest cyclomatic complexity seen"
-              />
-              <MetricCard
-                label="Function calls"
-                value={formatInteger(summary.calls)}
-                hint={`${summary.dependencies} distinct dependency(ies)`}
-              />
-              <MetricCard
-                label="I/O operations"
-                value={formatInteger(summary.io)}
-                hint="File, console and network access sites"
-              />
-              <MetricCard
-                label="Allocations"
-                value={formatInteger(structure?.allocations ?? 0)}
-                hint="Allocation sites detected by the parser"
+                tone={
+                  summary.maxComplexity != null &&
+                  summary.maxComplexity > 10
+                    ? "warn"
+                    : "ink"
+                }
+                hint="Highest cyclomatic complexity detected"
               />
             </Grid>
           </section>
 
+          {energySkipped ? (
+            <div className="mb-5 rounded-lg border border-line bg-surface-2 px-4 py-3">
+              <p className="text-sm font-medium text-ink">
+                Static analysis completed
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                No execution command was supplied, so energy consumption was
+                not measured. Configure a command under Advanced options when
+                you want to measure a run.
+              </p>
+            </div>
+          ) : null}
+
+          {/* MEASURED ENERGY */}
           {energy ? (
             <section className="mb-5">
               <SectionHeader
-                overline="Measured"
+                overline="Measured results"
                 title="Energy measurement"
-                description="Produced by CodeCarbon while the project executed. These are measurements, not predictions."
+                description="Values returned by the energy measurement workflow during execution; these are measurements, not predictions."
                 actions={
                   <Badge
                     tone={
@@ -581,18 +685,21 @@ export function AnalyzeView() {
                   value={formatEnergy(energy.energy_consumed)}
                   tone="accent"
                   emphasized
-                  hint="CodeCarbon total across CPU, GPU and RAM"
+                  hint="Reported energy for this execution"
                 />
+
                 <MetricCard
                   label="CO₂ equivalent"
                   value={formatCo2(energy.emissions)}
-                  hint="Emissions for this run"
+                  hint="Reported emissions for this run"
                 />
+
                 <MetricCard
                   label="Execution time"
                   value={formatDuration(energy.execution_time_seconds)}
                   hint={`Return code: ${energy.return_code ?? "—"}`}
                 />
+
                 <MetricCard
                   label={continuous ? "Snapshots" : "Runs"}
                   value={continuous ? signals.length : 1}
@@ -606,23 +713,26 @@ export function AnalyzeView() {
             </section>
           ) : null}
 
-          {/* ================= DETAILS (collapsed) ================= */}
+          {/* EXPANDABLE DETAILS */}
           <section className="mb-8">
             <SectionHeader
-              overline="Details"
-              title="Everything else"
-              description="Deep tables are collapsed by default so the summary above stays readable. Open only what you need."
+              overline="Technical details"
+              title="Explore results"
+              description="Open a section only when you need its detailed tables, measurements, logs, or raw API response."
             />
 
             <DisclosureStack>
               <Disclosure
-                title="Detailed code structure"
-                overline="Functions, classes, loops, calls"
-                summary={`${summary.functions} functions · ${summary.classes} classes · ${summary.loops} loops · ${summary.calls} calls`}
+                title="Code structure"
+                overline="Functions, classes, loops and calls"
+                summary={`${summary.functions} functions · ${summary.classes} classes · ${summary.loops} loops`}
               >
                 <div className="space-y-3">
-                  <Disclosure title="Functions" summary={`${summary.functions} entries`}>
-                    {structure?.functions?.length ? (
+                  <Disclosure
+                    title="Functions"
+                    summary={`${summary.functions} entries`}
+                  >
+                    {structure.functions?.length ? (
                       <DetailTable
                         columns={["Name", "File", "Lines", "Complexity"]}
                         rows={structure.functions.map((item) => [
@@ -635,28 +745,40 @@ export function AnalyzeView() {
                         ])}
                       />
                     ) : (
-                      <p className="text-xs text-muted">No functions were found.</p>
+                      <p className="text-xs text-muted">
+                        No functions were found.
+                      </p>
                     )}
                   </Disclosure>
 
-                  <Disclosure title="Classes" summary={`${summary.classes} entries`}>
-                    {structure?.classes?.length ? (
+                  <Disclosure
+                    title="Classes"
+                    summary={`${summary.classes} entries`}
+                  >
+                    {structure.classes?.length ? (
                       <DetailTable
                         columns={["Name", "File", "Lines", "Methods"]}
                         rows={structure.classes.map((item) => [
                           item.name,
                           truncate(item.file ?? "—", 48),
-                          item.start_line ? `${item.start_line}–${item.end_line ?? ""}` : "—",
+                          item.start_line
+                            ? `${item.start_line}–${item.end_line ?? ""}`
+                            : "—",
                           item.methods?.length ?? 0,
                         ])}
                       />
                     ) : (
-                      <p className="text-xs text-muted">No classes were found.</p>
+                      <p className="text-xs text-muted">
+                        No classes were found.
+                      </p>
                     )}
                   </Disclosure>
 
-                  <Disclosure title="Loops" summary={`${summary.loops} entries`}>
-                    {structure?.loops?.length ? (
+                  <Disclosure
+                    title="Loops"
+                    summary={`${summary.loops} entries`}
+                  >
+                    {structure.loops?.length ? (
                       <DetailTable
                         columns={["Kind", "File", "Line"]}
                         rows={structure.loops.map((loop) => [
@@ -666,15 +788,27 @@ export function AnalyzeView() {
                         ])}
                       />
                     ) : (
-                      <p className="text-xs text-muted">No loops were found.</p>
+                      <p className="text-xs text-muted">
+                        No loops were found.
+                      </p>
                     )}
+                  </Disclosure>
+
+                  <Disclosure
+                    title="Conditionals"
+                    summary={`${summary.conditionals} branches`}
+                  >
+                    <p className="text-sm text-muted">
+                      Total conditional branches detected:{" "}
+                      {formatInteger(summary.conditionals)}.
+                    </p>
                   </Disclosure>
 
                   <Disclosure
                     title="Function calls"
                     summary={`${summary.calls} entries`}
                   >
-                    {structure?.function_calls?.length ? (
+                    {structure.function_calls?.length ? (
                       <DetailTable
                         columns={["Function", "File", "Line", "Args"]}
                         rows={structure.function_calls.map((call) => [
@@ -685,7 +819,9 @@ export function AnalyzeView() {
                         ])}
                       />
                     ) : (
-                      <p className="text-xs text-muted">No calls were recorded.</p>
+                      <p className="text-xs text-muted">
+                        No calls were recorded.
+                      </p>
                     )}
                   </Disclosure>
 
@@ -693,7 +829,7 @@ export function AnalyzeView() {
                     title="I/O operations"
                     summary={`${summary.io} entries`}
                   >
-                    {structure?.io_operations?.length ? (
+                    {structure.io_operations?.length ? (
                       <DetailTable
                         columns={["File", "Operation"]}
                         rows={structure.io_operations.map((op) => [
@@ -702,34 +838,52 @@ export function AnalyzeView() {
                         ])}
                       />
                     ) : (
-                      <p className="text-xs text-muted">No I/O operations detected.</p>
+                      <p className="text-xs text-muted">
+                        No I/O operations detected.
+                      </p>
                     )}
                   </Disclosure>
 
                   <Disclosure
-                    title="Dependencies & data structures"
+                    title="Dependencies and data structures"
                     summary={`${summary.dependencies} dependencies · ${summary.dataStructures} data structures`}
                   >
                     <div className="space-y-4">
                       <TagList
                         label="Dependencies"
-                        values={structure?.dependencies ?? []}
+                        values={structure.dependencies ?? []}
                       />
                       <TagList
                         label="Data structures"
-                        values={structure?.data_structures ?? []}
+                        values={structure.data_structures ?? []}
                       />
                     </div>
+                  </Disclosure>
+
+                  <Disclosure
+                    title="Allocations"
+                    summary={`${structure.allocations ?? 0} detected`}
+                  >
+                    <p className="text-sm text-muted">
+                      Allocation sites detected by the parser:{" "}
+                      {formatInteger(structure.allocations ?? 0)}.
+                    </p>
+                  </Disclosure>
+
+                  <Disclosure title="Language breakdown">
+                    <p className="text-sm text-muted">
+                      {summary.languages || "No language breakdown available."}
+                    </p>
                   </Disclosure>
                 </div>
               </Disclosure>
 
               <Disclosure
                 title="Per-file breakdown"
-                overline="File table"
-                summary={`${structure?.files?.length ?? 0} file rows`}
+                overline="File-level metrics"
+                summary={`${structure.files?.length ?? 0} file rows`}
               >
-                {structure?.files?.length ? (
+                {structure.files?.length ? (
                   <DetailTable
                     columns={[
                       "File",
@@ -753,12 +907,14 @@ export function AnalyzeView() {
                     ])}
                   />
                 ) : (
-                  <p className="text-xs text-muted">No per-file details available.</p>
+                  <p className="text-xs text-muted">
+                    No per-file details available.
+                  </p>
                 )}
               </Disclosure>
 
               <Disclosure
-                title="Energy breakdown & resources"
+                title="Energy breakdown and resources"
                 overline="CPU · GPU · RAM"
                 summary={
                   energy
@@ -785,9 +941,18 @@ export function AnalyzeView() {
                           label: "RAM energy",
                           value: formatEnergy(energy.ram_energy),
                         },
-                        { label: "CPU power", value: formatWatts(energy.cpu_power) },
-                        { label: "GPU power", value: formatWatts(energy.gpu_power) },
-                        { label: "RAM power", value: formatWatts(energy.ram_power) },
+                        {
+                          label: "CPU power",
+                          value: formatWatts(energy.cpu_power),
+                        },
+                        {
+                          label: "GPU power",
+                          value: formatWatts(energy.gpu_power),
+                        },
+                        {
+                          label: "RAM power",
+                          value: formatWatts(energy.ram_power),
+                        },
                         {
                           label: "Emissions rate",
                           value:
@@ -817,13 +982,23 @@ export function AnalyzeView() {
                       <div>
                         <p className="overline mb-2">Snapshot history</p>
                         <DetailTable
-                          columns={["#", "Energy", "CO₂", "Elapsed", "Status"]}
+                          columns={[
+                            "#",
+                            "Energy",
+                            "CO₂",
+                            "Elapsed",
+                            "Status",
+                          ]}
                           rows={signals.map((snapshot) => [
                             snapshot.snapshot_index ?? "—",
                             formatEnergy(snapshot.energy_consumed),
                             formatCo2(snapshot.emissions),
-                            formatDuration(snapshot.execution_time_seconds),
-                            snapshot.final ? "final" : (snapshot.execution_status ?? "—"),
+                            formatDuration(
+                              snapshot.execution_time_seconds,
+                            ),
+                            snapshot.final
+                              ? "final"
+                              : (snapshot.execution_status ?? "—"),
                           ])}
                         />
                       </div>
@@ -837,21 +1012,30 @@ export function AnalyzeView() {
               </Disclosure>
 
               <Disclosure
-                title="Environment & metadata"
-                overline="Reproducibility"
-                summary="Hardware, tracking mode and identifiers for this measurement"
+                title="Environment and metadata"
+                overline="Measurement context"
+                summary="Hardware, tracking mode and run identifiers"
               >
                 {energy ? (
                   <KeyValue
                     columns={3}
                     items={[
-                      { label: "Project path", value: energy.project_path ?? "—" },
-                      { label: "Files in project", value: energy.file_count ?? "—" },
+                      {
+                        label: "Project path",
+                        value: energy.project_path ?? "—",
+                      },
+                      {
+                        label: "Files in project",
+                        value: energy.file_count ?? "—",
+                      },
                       {
                         label: "CPU count",
                         value: energy.cpu_count ?? "—",
                       },
-                      { label: "GPU count", value: energy.gpu_count ?? "—" },
+                      {
+                        label: "GPU count",
+                        value: energy.gpu_count ?? "—",
+                      },
                       {
                         label: "RAM total (GB)",
                         value:
@@ -861,17 +1045,35 @@ export function AnalyzeView() {
                               })
                             : "—",
                       },
-                      { label: "Tracking mode", value: energy.tracking_mode ?? "—" },
+                      {
+                        label: "Tracking mode",
+                        value: energy.tracking_mode ?? "—",
+                      },
                       {
                         label: "On cloud",
-                        value: energy.on_cloud == null ? "—" : String(energy.on_cloud),
+                        value:
+                          energy.on_cloud == null
+                            ? "—"
+                            : String(energy.on_cloud),
                       },
                       { label: "PUE", value: energy.pue ?? "—" },
                       { label: "WUE", value: energy.wue ?? "—" },
-                      { label: "Region", value: energy.country_name ?? "—" },
-                      { label: "Run id", value: truncate(energy.run_id ?? "—", 24) },
-                      { label: "Timestamp", value: energy.timestamp ?? "—" },
-                      { label: "Process id", value: energy.pid ?? "—" },
+                      {
+                        label: "Region",
+                        value: energy.country_name ?? "—",
+                      },
+                      {
+                        label: "Run ID",
+                        value: truncate(energy.run_id ?? "—", 24),
+                      },
+                      {
+                        label: "Timestamp",
+                        value: energy.timestamp ?? "—",
+                      },
+                      {
+                        label: "Process ID",
+                        value: energy.pid ?? "—",
+                      },
                       {
                         label: "Stop reason",
                         value: energy.stop_reason ?? "completed",
@@ -900,6 +1102,7 @@ export function AnalyzeView() {
                       maxHeight={220}
                     />
                   </div>
+
                   <div>
                     <p className="overline mb-1.5">stderr</p>
                     <CodeBlock
@@ -910,22 +1113,23 @@ export function AnalyzeView() {
                 </div>
               </Disclosure>
 
-              {(warnings.length > 0 || (structure?.failures?.length ?? 0) > 0) ? (
+              {(warnings.length > 0 ||
+                (structure.failures?.length ?? 0) > 0) ? (
                 <Disclosure
-                  title="Problems & notes"
-                  overline="Failures"
-                  summary={`${structure?.failures?.length ?? 0} failure(s), ${warnings.length} note(s)`}
+                  title="Problems and notes"
+                  overline="Diagnostics"
+                  summary={`${structure.failures?.length ?? 0} failure(s), ${warnings.length} note(s)`}
                 >
                   <div className="space-y-4">
                     {warnings.length > 0 ? (
                       <ul className="list-inside list-disc space-y-1 text-xs text-muted">
-                        {warnings.map((note) => (
-                          <li key={note}>{note}</li>
+                        {warnings.map((note, index) => (
+                          <li key={`${index}-${note}`}>{note}</li>
                         ))}
                       </ul>
                     ) : null}
 
-                    {structure?.failures?.length ? (
+                    {structure.failures?.length ? (
                       <DetailTable
                         columns={["File", "Language", "Error"]}
                         rows={structure.failures.map((failure) => [
@@ -940,19 +1144,20 @@ export function AnalyzeView() {
               ) : null}
 
               <Disclosure
-                title="Raw response"
+                title="Raw API response"
                 overline="JSON"
-                summary="The exact payloads returned by the API"
+                summary="Full payloads returned by the API"
               >
                 <div className="space-y-3">
                   <div>
-                    <p className="overline mb-1.5">Code understanding</p>
+                    <p className="overline mb-1.5">Code analysis</p>
                     <CodeBlock
                       code={JSON.stringify(structure, null, 2)}
                       language="json"
                       maxHeight={280}
                     />
                   </div>
+
                   {energy ? (
                     <div>
                       <p className="overline mb-1.5">Energy measurement</p>
@@ -974,7 +1179,7 @@ export function AnalyzeView() {
 }
 
 /* ============================================================
-   LOCAL PRESENTATION HELPERS
+   PRESENTATION HELPERS
    ============================================================ */
 
 function DetailTable({
@@ -999,6 +1204,7 @@ function DetailTable({
             ))}
           </tr>
         </thead>
+
         <tbody>
           {rows.slice(0, 300).map((row, rowIndex) => (
             <tr
@@ -1011,13 +1217,14 @@ function DetailTable({
                   className="max-w-[26rem] truncate px-3 py-1.5 text-ink/90"
                   title={typeof cell === "string" ? cell : undefined}
                 >
-                  {cell === null || cell === undefined ? "—" : String(cell)}
+                  {cell == null ? "—" : String(cell)}
                 </td>
               ))}
             </tr>
           ))}
         </tbody>
       </table>
+
       {rows.length > 300 ? (
         <p className="border-t border-line px-3 py-2 text-[11px] text-muted">
           Showing 300 of {rows.length} rows.
@@ -1027,20 +1234,28 @@ function DetailTable({
   );
 }
 
-function TagList({ label, values }: { label: string; values: string[] }) {
+function TagList({
+  label,
+  values,
+}: {
+  label: string;
+  values: string[];
+}) {
   return (
     <div>
       <p className="overline mb-2">{label}</p>
+
       {values.length ? (
         <div className="flex flex-wrap gap-1.5">
-          {values.slice(0, 120).map((value) => (
+          {values.slice(0, 120).map((value, index) => (
             <span
-              key={value}
+              key={`${index}-${value}`}
               className="rounded border border-line bg-surface-2 px-2 py-0.5 font-mono text-[11px] text-ink/80"
             >
               {value}
             </span>
           ))}
+
           {values.length > 120 ? (
             <span className="text-[11px] text-muted">
               +{values.length - 120} more

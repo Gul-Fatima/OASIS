@@ -59,6 +59,7 @@ class CodeState:
     complexity: dict[str, int] = field(default_factory=dict)
     allocations: int = 0
     dependencies: list[str] = field(default_factory=list)
+    syntax_error: str | None = None  # first syntax error, if any; non-blocking
 
     def to_dict(self) -> dict:
         """Serialize to a plain JSON-compatible dict."""

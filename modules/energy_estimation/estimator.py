@@ -63,12 +63,17 @@ class EnergyEstimator:
 
         try:
             tracker.start()
-            execution_result = executor.execute()
+            execution_result = executor.execute(
+                should_stop=self.is_stop_requested
+            )
         finally:
             tracker.stop()
 
         end_time = time.perf_counter()
         execution_time = end_time - start_time
+
+        stopped_by_user = bool(execution_result.get("stopped_by_user"))
+        timed_out = bool(execution_result.get("timed_out"))
 
         cleaned_result = self._read_latest_measurement()
         cleaned_result = self._attach_execution_info(
@@ -77,6 +82,14 @@ class EnergyEstimator:
             execution_time,
             continuous=False,
             snapshot_index=1,
+            stop_reason=(
+                "stopped_by_user"
+                if stopped_by_user
+                else "timeout"
+                if timed_out
+                else None
+            ),
+            stopped_by_user=stopped_by_user,
         )
 
         self._print_summary(cleaned_result, execution_time)

@@ -78,3 +78,50 @@
     color: var(--color-muted);
   }
 }
+
+/* ============================================================
+   Light theme
+
+   Same token names, different values. `data-theme="light"` is set
+   on <html> by the toggle in AppShell, so every utility that
+   resolves a token (bg-canvas, bg-surface, text-ink, border-line,
+   text-muted, bg-accent-soft, …) follows along and no component
+   needs theme-specific classes. With no attribute the file above
+   applies unchanged, so dark stays the default.
+
+   These rules are deliberately unlayered: unlayered declarations
+   win over the `theme`/`base` layers, so the override beats both
+   the @theme defaults and the `html { color-scheme: dark }` rule.
+   ============================================================ */
+
+:root {
+  /* Elevation used by cards and open disclosures; lighter in light mode. */
+  --elevation: 0 10px 30px rgb(0 0 0 / 0.35);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces: canvas is the page, surface is cards/sidebar, so an inset
+     `bg-canvas` panel reads as recessed against a white card. */
+  --color-canvas: #f4f5fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f7f8fc;
+  --color-surface-3: #e3e7f2;
+  --color-line: #dfe3ef;
+  --color-ink: #1a2230;
+  --color-muted: #5d6b80;
+
+  /* Accents are darkened so they stay readable on white. */
+  --color-accent: #0f7a55;
+  --color-accent-soft: #dcf2e7;
+  --color-info: #0b6c9c;
+  --color-info-soft: #dbedf9;
+  --color-warn: #9a6200;
+  --color-warn-soft: #fbeed2;
+  --color-danger: #c02b3d;
+  --color-danger-soft: #fbe0e3;
+  --color-violet: #6344cc;
+
+  --elevation: 0 8px 24px rgb(15 23 42 / 0.08);
+}

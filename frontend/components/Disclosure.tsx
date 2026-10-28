@@ -25,7 +25,7 @@ export function Disclosure({
   return (
     <details
       open={defaultOpen}
-      className="group rounded-xl border border-line bg-surface open:shadow-lg open:shadow-black/20"
+      className="group rounded-xl border border-line bg-surface open:shadow-[var(--elevation)]"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3.5">
         <div className="min-w-0">

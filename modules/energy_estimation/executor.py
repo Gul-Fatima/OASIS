@@ -1,6 +1,7 @@
 import os
 import subprocess
 import tempfile
+import threading
 import time
 
 import psutil
@@ -29,6 +30,12 @@ class ProjectExecutor:
         self._start_time = None
         self._stdout_file = None
         self._stderr_file = None
+
+        # Guards the process lifecycle so stop() can be called from
+        # the API thread while execute() is waiting on it.
+        self._lock = threading.Lock()
+        self._stop_requested = False
+        self._stop_result = None
 
     # --------------------------------------------------------
     # PROCESS CONTROL
@@ -120,52 +127,70 @@ class ProjectExecutor:
         """
         Stop the project process and its whole process tree
         (e.g. PHP workers spawned by the server).
+
+        Safe to call from the API thread while execute() is waiting:
+        the first call performs the kill and later calls return the
+        same result, so both threads agree on the return code.
         """
 
-        if self.process is None:
-            return {
-                "return_code": None,
-                "stdout": "",
-                "stderr": "Process was never started.",
-                "stopped_by_user": False,
-                "pid": None,
+        # Set before taking the lock, so a stop request wakes the
+        # execute() polling loop even while this call is killing.
+        self._stop_requested = True
+
+        with self._lock:
+            if self._stop_result is not None:
+                return self._stop_result
+
+            if self.process is None:
+                return {
+                    "return_code": None,
+                    "stdout": "",
+                    "stderr": "Process was never started.",
+                    "stopped_by_user": False,
+                    "timed_out": False,
+                    "pid": None,
+                    "running": False,
+                }
+
+            stopped_by_user = self.process.poll() is None
+            pid = self.process.pid
+
+            if stopped_by_user:
+                self._kill_process_tree(pid)
+
+            # wait() only waits for the direct child, so a grandchild
+            # that still holds the output handles cannot block it the
+            # way subprocess.communicate() would.
+            try:
+                return_code = self.process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                return_code = self.process.wait()
+
+            elapsed = time.perf_counter() - self._start_time
+
+            print()
+            print("=" * 60)
+            print("           PROJECT STOPPED")
+            print("=" * 60)
+            print(f"Return Code : {return_code}")
+            print(f"Elapsed     : {elapsed:.2f} seconds")
+
+            stdout, stderr = self.get_output()
+            self._close_output_files()
+            self.process = None
+
+            self._stop_result = {
+                "return_code": return_code,
+                "stdout": stdout,
+                "stderr": stderr,
+                "elapsed_seconds": elapsed,
+                "stopped_by_user": stopped_by_user,
+                "timed_out": False,
+                "pid": pid,
                 "running": False,
             }
-
-        stopped_by_user = self.process.poll() is None
-        pid = self.process.pid
-
-        if stopped_by_user:
-            self._kill_process_tree(pid)
-
-        try:
-            return_code = self.process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-            return_code = self.process.wait()
-
-        elapsed = time.perf_counter() - self._start_time
-
-        print()
-        print("=" * 60)
-        print("           PROJECT STOPPED")
-        print("=" * 60)
-        print(f"Return Code : {return_code}")
-        print(f"Elapsed     : {elapsed:.2f} seconds")
-
-        stdout, stderr = self.get_output()
-        self._close_output_files()
-        self.process = None
-
-        return {
-            "return_code": return_code,
-            "stdout": stdout,
-            "stderr": stderr,
-            "elapsed_seconds": elapsed,
-            "stopped_by_user": stopped_by_user,
-            "pid": pid,
-            "running": False,
-        }
+            return self._stop_result
 
     def get_output(self, max_chars: int = 4000):
         """Return truncated (stdout, stderr) captured so far."""
@@ -236,7 +261,23 @@ class ProjectExecutor:
     # LEGACY BLOCKING EXECUTION
     # --------------------------------------------------------
 
-    def execute(self):
+    def execute(self, should_stop=None):
+        """
+        Run the project to completion and return its result.
+
+        The process is started non-blocking and polled, instead of
+        being handed to ``subprocess.run``. That is what makes both
+        the timeout and stop() actually end the run:
+
+        * on timeout the whole process tree is killed here, rather
+          than only the shell that ``shell=True`` spawned (on Windows
+          ``subprocess.run`` then re-enters communicate() with no
+          timeout and waits forever for a grandchild to release the
+          output pipes);
+        * ``should_stop`` is polled every 200 ms, so the Stop button
+          ends the run instead of leaving it orphaned.
+        """
+
         print()
         print("=" * 60)
         print("           STARTING PROJECT (BLOCKING)")
@@ -244,41 +285,48 @@ class ProjectExecutor:
         print(f"Working Directory : {self.working_directory}")
         print(f"Command           : {self.command}")
 
-        environment = os.environ.copy()
-        environment["PYTHONIOENCODING"] = "utf-8"
-        environment["PYTHONUTF8"] = "1"
-
-        try:
-            result = subprocess.run(
-                self.command,
-                cwd=self.working_directory,
-                shell=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                env=environment,
-                timeout=self.timeout,
-            )
-
-            print(f"Return Code : {result.returncode}")
-
-            return {
-                "return_code": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-            }
-
-        except subprocess.TimeoutExpired:
+        if not self.start():
             return {
                 "return_code": -1,
                 "stdout": "",
-                "stderr": "Project execution timed out.",
+                "stderr": "Failed to start project.",
+                "stopped_by_user": False,
+                "timed_out": False,
+                "pid": None,
+                "running": False,
             }
 
-        except Exception as e:
-            return {
-                "return_code": -1,
-                "stdout": "",
-                "stderr": str(e),
-            }
+        timed_out = False
+
+        while True:
+            status = self.poll()
+
+            if not status["running"]:
+                break
+
+            if self._stop_requested or (
+                should_stop is not None and should_stop()
+            ):
+                print("Stop requested; terminating project.")
+                break
+
+            if status["timed_out"]:
+                timed_out = True
+                print(
+                    f"Timeout of {self.timeout}s reached; "
+                    "terminating project."
+                )
+                break
+
+            time.sleep(0.2)
+
+        result = self.stop()
+
+        if timed_out:
+            # stop() reports "stopped by user" for every process it has
+            # to kill; here the elapsed timeout was the reason.
+            result["timed_out"] = True
+            result["stopped_by_user"] = False
+
+        print(f"Return Code : {result.get('return_code')}")
+        return result
