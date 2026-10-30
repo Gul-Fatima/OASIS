@@ -37,16 +37,16 @@ export default function LandingPage() {
 
           <nav className="flex items-center gap-3">
             <Link
-              href="/auth"
+              href="/taxonomy"
               className="rounded-lg px-3 py-2 text-sm font-medium text-[#45495A] hover:bg-[#F7F7FC]"
             >
-              Sign in
+              Taxonomy
             </Link>
             <Link
-              href="/auth"
+              href="/home"
               className="rounded-lg bg-[#176B48] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#12583B]"
             >
-              Get started
+              Open workspace
             </Link>
           </nav>
         </div>
@@ -75,10 +75,10 @@ export default function LandingPage() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/auth"
+              href="/home"
               className="inline-flex items-center gap-2 rounded-lg bg-[#176B48] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#12583B]"
             >
-              Get started with OASIS
+              Open the workspace
               <span aria-hidden="true">→</span>
             </Link>
             <a

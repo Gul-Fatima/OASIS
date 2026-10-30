@@ -1,9 +1,6 @@
-import { DetectView } from "@/components/detect/DetectView";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Energy Smell Detection — OASIS",
-};
-
+/** The standalone detection page became stage 1 of the workspace. */
 export default function DetectPage() {
-  return <DetectView />;
+  redirect("/workspace/scan");
 }

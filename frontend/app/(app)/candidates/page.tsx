@@ -1,9 +1,6 @@
-import { CandidatesView } from "@/components/candidates/CandidatesView";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Optimization Pipeline — OASIS",
-};
-
+/** The standalone pipeline page became stage 3 of the workspace. */
 export default function CandidatesPage() {
-  return <CandidatesView />;
+  redirect("/workspace/improve");
 }

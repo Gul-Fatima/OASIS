@@ -1,9 +1,6 @@
-import { EnergyView } from "@/components/energy/EnergyView";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Energy Measurement — OASIS",
-};
-
+/** The standalone measurement page became stage 2 of the workspace. */
 export default function EnergyPage() {
-  return <EnergyView />;
+  redirect("/workspace/measure");
 }

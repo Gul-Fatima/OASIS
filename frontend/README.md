@@ -33,12 +33,14 @@ The UI talks to `http://127.0.0.1:8000` by default. To point it elsewhere, copy
 | Route | What it does |
 |---|---|
 | `/` | Public landing page (group `(public)` — no sidebar) |
-| `/home` | Public light project dashboard (group `(public)` — no sidebar) |
-| `/optimize` | Optimize: pick a file, review issues and strategies, copy the prompt |
-| `/analyze` | Combined analysis: parse a file/folder, then measure its energy |
-| `/energy` | Energy measurement with CodeCarbon, including continuous mode |
-| `/detect` | Static energy smell detection mapped to the taxonomy |
-| `/candidates` | Full optimization pipeline with accept/reject recording |
+| `/home` | Workspace launcher: next action, the four stages, recent decisions |
+| `/workspace/scan` | **Stage 1** — static energy smell detection with a filterable findings list |
+| `/workspace/measure` | **Stage 2** — live CodeCarbon board (energy, power, CO₂, sparkline) |
+| `/workspace/improve` | **Stage 3** — streamed pipeline, candidate list + detail |
+| `/workspace/decide` | **Stage 4** — measured comparison and accept/reject recording |
+| `/detect`, `/energy`, `/candidates` | Redirect to the corresponding stage |
+| `/analyze` | Project structure: parse a file/folder, optionally measure |
+| `/optimize` | Prompt lab: review issues and copy an LLM prompt |
 | `/taxonomy` | The 12-category energy smell taxonomy |
 | `/history` | Recorded optimization decisions |
 | `/settings` | Backend, LLM and language configuration |
@@ -56,6 +58,10 @@ The UI talks to `http://127.0.0.1:8000` by default. To point it elsewhere, copy
    with the same prominence as improvements.
 4. **No business logic in components.** Energy, verification and decision logic
    lives in the backend modules; the UI only renders what the API returns.
+5. **One workflow, four stages.** Scan → Measure → Improve → Decide, with the
+   current step, its result and the single next action shown on every screen.
+   Each stage remains directly reachable, so the flow guides without locking
+   anyone in. Results and paths live in `WorkspaceContext`, not in each page.
 
 ## Structure
 
@@ -68,10 +74,17 @@ app/
   (app)/layout.tsx          mounts AppShell for every route below
   (app)/optimize/ analyze/ energy/ detect/ candidates/ taxonomy/ history/ settings/
 components/
-  AppShell.tsx              sidebar NAV array + mobile header + backend health probe
+  AppShell.tsx              workflow rail + tools + mobile header + backend health probe
   Disclosure.tsx            collapsible sections
   ui.tsx                    shared primitives (cards, badges, tables, inputs)
-  analyze/ energy/ detect/ candidates/ optimize/   client views per dashboard
+  workspace/
+    WorkspaceContext.tsx    shared settings + per-stage results + stage progress
+    StageChrome.tsx         stage header, step strip, guidance bar, workspace bar
+    Sparkline.tsx           zero-dependency live chart
+    FindingsExplorer.tsx    filter/sort/search/expand findings list
+    ScanView.tsx MeasureView.tsx ImproveView.tsx DecideView.tsx
+    LauncherView.tsx        the /home workspace launcher
+  analyze/ optimize/        secondary tools
 lib/
   api.ts                    typed fetch client + SSE stream reader
   types.ts                  backend response contracts
@@ -81,9 +94,19 @@ lib/
 **Where the sidebar and header live.** The sidebar, the mobile `☰ Menu` bar, the
 "backend offline" banner and the footer are all rendered by
 `components/AppShell.tsx`, which `app/(app)/layout.tsx` wraps around every route
-in that group. Add or reorder nav entries in its `NAV` array; individual pages
-never render navigation themselves. The public pages are the exception — the
-landing page has its own `<header>` inline in `app/(public)/page.tsx`.
+in that group. The four workflow stages come from `STAGES` in
+`components/workspace/WorkspaceContext.tsx`; utility links live in `UTILITY_NAV`
+in `AppShell.tsx`. Individual pages never render navigation themselves. The
+public landing page is the exception — it has its own `<header>` inline in
+`app/(public)/page.tsx`.
+
+**The workspace.** `WorkspaceProvider` (mounted by `app/(app)/layout.tsx`) is the
+single source of truth for the file path, project path, language and execution
+command (persisted to `localStorage` under `oasis-workspace`) and for the result
+of each stage. Because the layout does not remount between routes, Scan →
+Measure → Improve → Decide keep their results as you move; a hard refresh keeps
+the settings but clears the results. Every stage reads and writes the same
+state, so nothing is retyped.
 
 **Themes.** `globals.css` defines the dark palette in `@theme`; a second
 `:root[data-theme="light"]` block redefines the same token names with light
@@ -103,9 +126,6 @@ will ignore the toggle.
 `(public)/page.tsx` and `(public)/home/page.tsx` hard-code `#F7F7FC` /
 `#20252C`. Don't cross the two — a light page inside `(app)/` only paints the
 part of the viewport it covers and leaves the dark canvas visible around it.
-Because `/home` is in the public group, the sidebar's *Dashboard* link leaves the
-shell instead of staying inside it.
-
 Long-running endpoints stream Server-Sent Events over POST, so `EventSource`
 cannot be used (it only supports GET). `lib/api.ts#streamPost` reads the response
 body with a streaming reader and parses `data:` frames itself.
